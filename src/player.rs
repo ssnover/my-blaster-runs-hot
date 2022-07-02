@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::components::{Despawnable, Moveable, NormalBlasterFire, Player, RangedWeapon, Velocity};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
 use crate::resources::{Controller, GameTextures, WindowSize};
+use crate::utils::CooldownTimer;
 
 pub struct PlayerPlugin;
 
@@ -36,6 +37,7 @@ fn player_spawn_system(
         ..Default::default()
     })
     .insert(RangedWeapon {
+        fire_rate_timer: CooldownTimer::from_seconds(0.5),
         ..Default::default()
     });
 }
@@ -90,10 +92,14 @@ fn player_velocity_control_keyboard_system(
 
 fn player_fire_blaster_system(
     mut cmds: Commands,
-    query: Query<(&Transform, &RangedWeapon), With<Player>>,
+    time: Res<Time>,
+    mut query: Query<(&Transform, &mut RangedWeapon), With<Player>>,
 ) {
-    let (tf, weapon_data) = query.get_single().unwrap();
-    if weapon_data.firing {
+    let (tf, mut weapon_data) = query.get_single_mut().unwrap();
+    weapon_data.fire_rate_timer.tick(time.delta());
+
+    if weapon_data.firing && weapon_data.fire_rate_timer.ready() {
+        weapon_data.fire_rate_timer.trigger();
         cmds.spawn_bundle(SpriteBundle {
             sprite: Sprite {
                 color: Color::rgb_u8(240, 0, 15),

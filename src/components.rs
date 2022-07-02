@@ -1,3 +1,6 @@
+use std::collections::btree_map::Range;
+
+use crate::utils::CooldownTimer;
 use bevy::prelude::*;
 
 #[derive(Component, Deref, DerefMut)]
@@ -36,10 +39,21 @@ pub struct Civilian;
 #[derive(Component)]
 pub struct NormalBlasterFire;
 
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct RangedWeapon {
     pub aim_direction: Vec2,
     pub firing: bool,
+    pub fire_rate_timer: CooldownTimer,
+}
+
+impl Default for RangedWeapon {
+    fn default() -> Self {
+        Self {
+            aim_direction: Default::default(),
+            firing: Default::default(),
+            fire_rate_timer: CooldownTimer::from_seconds(1.),
+        }
+    }
 }
 
 #[derive(Component)]
