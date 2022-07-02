@@ -32,7 +32,7 @@ fn player_spawn_system(
     .insert(Player)
     .insert(Velocity::from(Vec2::new(0., 0.)))
     .insert(Moveable {
-        speed_multiplier: 2.,
+        speed_multiplier: 1.,
         ..Default::default()
     })
     .insert(RangedWeapon {
@@ -65,7 +65,10 @@ fn player_control_system(
         let axis_ry = GamepadAxis(controller.0, GamepadAxisType::RightStickY);
         if let (Some(x), Some(y)) = (axes.get(axis_rx), axes.get(axis_ry)) {
             if x.abs() > 0.2 || y.abs() > 0.2 {
-                weapon_data.aim_direction = Vec2::new(x, y);
+                // Normalize the vector so that the controller input doesn't control the speed
+                let magnitude = (x.powf(2.) + y.powf(2.)).sqrt();
+                let scalar = 1. / magnitude;
+                weapon_data.aim_direction = Vec2::new(x * scalar, y * scalar);
             }
         }
     } else {
@@ -127,7 +130,7 @@ fn player_fire_blaster_system(
         .insert(Velocity::from(weapon_data.aim_direction))
         .insert(Moveable {
             solid: false,
-            speed_multiplier: 1.,
+            speed_multiplier: 1.5,
         });
     }
 }
