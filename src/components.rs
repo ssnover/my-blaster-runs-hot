@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 #[derive(Component, Deref, DerefMut)]
-pub struct Velocity(Vec2);
+pub struct Velocity(pub Vec2);
 
 impl From<Vec2> for Velocity {
     fn from(vec2: Vec2) -> Self {
@@ -11,3 +11,9 @@ impl From<Vec2> for Velocity {
 
 #[derive(Component)]
 pub struct Player;
+
+#[derive(Component)]
+pub struct Enemy;
+
+#[derive(Component)]
+pub struct Civilian;
