@@ -20,11 +20,16 @@ fn movement_system(win_size: Res<WindowSize>, mut query: Query<(&Velocity, &Move
         let x_position_delta = velocity.x * TIME_STEP * BASE_SPEED * moveable.speed_multiplier;
         let y_position_delta = velocity.y * TIME_STEP * BASE_SPEED * moveable.speed_multiplier;
 
-        let x_position = (tf.translation.x + x_position_delta).min(win_size.w / 2. - MOVEMENT_BOUND_MARGIN);
-        tf.translation.x = x_position.max(-win_size.w / 2. + MOVEMENT_BOUND_MARGIN);
+        if (moveable.solid) {
+            let x_position = (tf.translation.x + x_position_delta).min(win_size.w / 2. - MOVEMENT_BOUND_MARGIN);
+            tf.translation.x = x_position.max(-win_size.w / 2. + MOVEMENT_BOUND_MARGIN);
 
-        let y_position = (tf.translation.y + y_position_delta).min(win_size.h / 2. - MOVEMENT_BOUND_MARGIN);
-        tf.translation.y = y_position.max(-win_size.h / 2. + MOVEMENT_BOUND_MARGIN);
+            let y_position = (tf.translation.y + y_position_delta).min(win_size.h / 2. - MOVEMENT_BOUND_MARGIN);
+            tf.translation.y = y_position.max(-win_size.h / 2. + MOVEMENT_BOUND_MARGIN);
+        } else {
+            tf.translation.x += x_position_delta;
+            tf.translation.y += y_position_delta;
+        }
     }
 }
 
@@ -37,7 +42,7 @@ fn despawn_system(
         if tf.translation.x < ((-win_size.w / 2.) - DESPAWN_MARGIN)
             || tf.translation.x > ((win_size.w / 2.) + DESPAWN_MARGIN)
             || tf.translation.y > ((win_size.h / 2.) + DESPAWN_MARGIN)
-            || tf.translation.y < ((-win_size.h / 2.) + DESPAWN_MARGIN)
+            || tf.translation.y < ((-win_size.h / 2.) - DESPAWN_MARGIN)
         {
             cmds.entity(entity).despawn_recursive();
         }
