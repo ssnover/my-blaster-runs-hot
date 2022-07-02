@@ -8,6 +8,7 @@ const QWARK_SIZE: (f32, f32) = (500., 500.);
 mod components;
 mod constants;
 mod gamepad;
+mod movement;
 mod player;
 mod resources;
 use resources::{GameTextures, WindowSize};
@@ -24,6 +25,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)
+        .add_plugin(movement::MovementPlugin)
         .add_startup_system(setup_system)
         .run();
 }

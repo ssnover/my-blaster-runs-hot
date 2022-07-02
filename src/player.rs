@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::{Player, Velocity};
+use crate::components::{Despawnable, Moveable, NormalBlasterFire, Player, RangedWeapon, Velocity};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
 use crate::resources::{Controller, GameTextures, WindowSize};
 
@@ -11,7 +11,7 @@ impl Plugin for PlayerPlugin {
         app.add_startup_system_to_stage(StartupStage::PostStartup, player_spawn_system)
             .add_system(player_velocity_control_gamepad_system)
             .add_system(player_velocity_control_keyboard_system)
-            .add_system(player_movement_system);
+            .add_system(player_fire_blaster_system);
     }
 }
 
@@ -30,7 +30,14 @@ fn player_spawn_system(
         ..Default::default()
     })
     .insert(Player)
-    .insert(Velocity::from(Vec2::new(0., 0.)));
+    .insert(Velocity::from(Vec2::new(0., 0.)))
+    .insert(Moveable {
+        speed_multiplier: 2.,
+        ..Default::default()
+    })
+    .insert(RangedWeapon {
+        ..Default::default()
+    });
 }
 
 fn player_velocity_control_gamepad_system(
@@ -52,11 +59,11 @@ fn player_velocity_control_gamepad_system(
 }
 
 fn player_velocity_control_keyboard_system(
-    mut query: Query<&mut Velocity, With<Player>>,
+    mut query: Query<(&mut Velocity, &mut RangedWeapon), With<Player>>,
     controller: Option<Res<Controller>>,
     keys: Res<Input<KeyCode>>,
 ) {
-    let mut velocity = query.get_single_mut().unwrap();
+    let (mut velocity, mut weapon_data) = query.get_single_mut().unwrap();
     if controller.is_none() {
         if keys.pressed(KeyCode::W) {
             velocity.y = 1.;
@@ -72,12 +79,39 @@ fn player_velocity_control_keyboard_system(
         } else {
             velocity.x = 0.;
         }
+
+        if keys.pressed(KeyCode::Comma) {
+            weapon_data.firing = true;
+        } else {
+            weapon_data.firing = false;
+        }
     }
 }
 
-fn player_movement_system(mut query: Query<(&Velocity, &mut Transform), With<Player>>) {
-    for (velocity, mut tf) in query.iter_mut() {
-        tf.translation.x += velocity.x * TIME_STEP * BASE_SPEED;
-        tf.translation.y += velocity.y * TIME_STEP * BASE_SPEED;
+fn player_fire_blaster_system(
+    mut cmds: Commands,
+    query: Query<(&Transform, &RangedWeapon), With<Player>>,
+) {
+    let (tf, weapon_data) = query.get_single().unwrap();
+    if weapon_data.firing {
+        cmds.spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgb_u8(240, 0, 15),
+                custom_size: Some(Vec2::new(20., 20.)),
+                ..Default::default()
+            },
+            transform: Transform {
+                translation: Vec3::new(tf.translation.x, tf.translation.y, 1.),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .insert(NormalBlasterFire)
+        .insert(Despawnable)
+        .insert(Velocity::from(Vec2::new(1., 1.)))
+        .insert(Moveable {
+            solid: false,
+            speed_multiplier: 1.5,
+        });
     }
 }
