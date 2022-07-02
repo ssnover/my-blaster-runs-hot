@@ -15,16 +15,21 @@ impl Plugin for MovementPlugin {
     }
 }
 
-fn movement_system(win_size: Res<WindowSize>, mut query: Query<(&Velocity, &Moveable, &mut Transform)>) {
+fn movement_system(
+    win_size: Res<WindowSize>,
+    mut query: Query<(&Velocity, &Moveable, &mut Transform)>,
+) {
     for (velocity, moveable, mut tf) in query.iter_mut() {
         let x_position_delta = velocity.x * TIME_STEP * BASE_SPEED * moveable.speed_multiplier;
         let y_position_delta = velocity.y * TIME_STEP * BASE_SPEED * moveable.speed_multiplier;
 
         if (moveable.solid) {
-            let x_position = (tf.translation.x + x_position_delta).min(win_size.w / 2. - MOVEMENT_BOUND_MARGIN);
+            let x_position =
+                (tf.translation.x + x_position_delta).min(win_size.w / 2. - MOVEMENT_BOUND_MARGIN);
             tf.translation.x = x_position.max(-win_size.w / 2. + MOVEMENT_BOUND_MARGIN);
 
-            let y_position = (tf.translation.y + y_position_delta).min(win_size.h / 2. - MOVEMENT_BOUND_MARGIN);
+            let y_position =
+                (tf.translation.y + y_position_delta).min(win_size.h / 2. - MOVEMENT_BOUND_MARGIN);
             tf.translation.y = y_position.max(-win_size.h / 2. + MOVEMENT_BOUND_MARGIN);
         } else {
             tf.translation.x += x_position_delta;
