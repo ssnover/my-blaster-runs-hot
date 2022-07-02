@@ -5,6 +5,7 @@ use crate::constants::{BASE_SPEED, TIME_STEP};
 use crate::resources::WindowSize;
 
 const DESPAWN_MARGIN: f32 = 200.;
+const MOVEMENT_BOUND_MARGIN: f32 = 50.;
 
 pub struct MovementPlugin;
 
@@ -14,10 +15,16 @@ impl Plugin for MovementPlugin {
     }
 }
 
-fn movement_system(mut query: Query<(&Velocity, &Moveable, &mut Transform)>) {
+fn movement_system(win_size: Res<WindowSize>, mut query: Query<(&Velocity, &Moveable, &mut Transform)>) {
     for (velocity, moveable, mut tf) in query.iter_mut() {
-        tf.translation.x += velocity.x * TIME_STEP * BASE_SPEED * moveable.speed_multiplier;
-        tf.translation.y += velocity.y * TIME_STEP * BASE_SPEED * moveable.speed_multiplier;
+        let x_position_delta = velocity.x * TIME_STEP * BASE_SPEED * moveable.speed_multiplier;
+        let y_position_delta = velocity.y * TIME_STEP * BASE_SPEED * moveable.speed_multiplier;
+
+        let x_position = (tf.translation.x + x_position_delta).min(win_size.w / 2. - MOVEMENT_BOUND_MARGIN);
+        tf.translation.x = x_position.max(-win_size.w / 2. + MOVEMENT_BOUND_MARGIN);
+
+        let y_position = (tf.translation.y + y_position_delta).min(win_size.h / 2. - MOVEMENT_BOUND_MARGIN);
+        tf.translation.y = y_position.max(-win_size.h / 2. + MOVEMENT_BOUND_MARGIN);
     }
 }
 
