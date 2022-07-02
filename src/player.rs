@@ -9,8 +9,7 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::PostStartup, player_spawn_system)
-            .add_system(player_velocity_control_gamepad_system)
-            .add_system(player_velocity_control_keyboard_system)
+            .add_system(player_control_system)
             .add_system(player_fire_blaster_system);
     }
 }
@@ -36,17 +35,19 @@ fn player_spawn_system(
         ..Default::default()
     })
     .insert(RangedWeapon {
+        aim_direction: Vec2::new(1., 0.),
         ..Default::default()
     });
 }
 
-fn player_velocity_control_gamepad_system(
-    mut query: Query<&mut Velocity, With<Player>>,
+fn player_control_system(
+    mut query: Query<(&mut Velocity, &mut RangedWeapon), With<Player>>,
     controller: Option<Res<Controller>>,
+    keys: Res<Input<KeyCode>>,
     axes: Res<Axis<GamepadAxis>>,
     buttons: Res<Input<GamepadButton>>,
 ) {
-    let mut velocity = query.get_single_mut().unwrap();
+    let (mut velocity, mut weapon_data) = query.get_single_mut().unwrap();
     if let Some(controller) = controller {
         let axis_lx = GamepadAxis(controller.0, GamepadAxisType::LeftStickX);
         let axis_ly = GamepadAxis(controller.0, GamepadAxisType::LeftStickY);
@@ -55,16 +56,17 @@ fn player_velocity_control_gamepad_system(
             velocity.x = x;
             velocity.y = y;
         }
-    }
-}
+        let normal_fire_button = GamepadButton(controller.0, GamepadButtonType::LeftTrigger);
+        weapon_data.firing = buttons.pressed(normal_fire_button);
 
-fn player_velocity_control_keyboard_system(
-    mut query: Query<(&mut Velocity, &mut RangedWeapon), With<Player>>,
-    controller: Option<Res<Controller>>,
-    keys: Res<Input<KeyCode>>,
-) {
-    let (mut velocity, mut weapon_data) = query.get_single_mut().unwrap();
-    if controller.is_none() {
+        let axis_rx = GamepadAxis(controller.0, GamepadAxisType::RightStickX);
+        let axis_ry = GamepadAxis(controller.0, GamepadAxisType::RightStickY);
+        if let (Some(x), Some(y)) = (axes.get(axis_rx), axes.get(axis_ry)) {
+            if x.abs() > 0.2 || y.abs() > 0.2 {
+                weapon_data.aim_direction = Vec2::new(x, y);
+            }
+        }
+    } else {
         if keys.pressed(KeyCode::W) {
             velocity.y = 1.;
         } else if keys.pressed(KeyCode::S) {
@@ -80,10 +82,18 @@ fn player_velocity_control_keyboard_system(
             velocity.x = 0.;
         }
 
-        if keys.pressed(KeyCode::Comma) {
-            weapon_data.firing = true;
-        } else {
-            weapon_data.firing = false;
+        weapon_data.firing = keys.pressed(KeyCode::RShift);
+        if keys.pressed(KeyCode::Up) {
+            weapon_data.aim_direction.y = 1.;
+        }
+        if keys.pressed(KeyCode::Down) {
+            weapon_data.aim_direction.y = -1.;
+        }
+        if keys.pressed(KeyCode::Left) {
+            weapon_data.aim_direction.x = -1.;
+        }
+        if keys.pressed(KeyCode::Right) {
+            weapon_data.aim_direction.x = 1.;
         }
     }
 }
@@ -108,10 +118,10 @@ fn player_fire_blaster_system(
         })
         .insert(NormalBlasterFire)
         .insert(Despawnable)
-        .insert(Velocity::from(Vec2::new(1., 1.)))
+        .insert(Velocity::from(weapon_data.aim_direction))
         .insert(Moveable {
             solid: false,
-            speed_multiplier: 1.5,
+            speed_multiplier: 1.,
         });
     }
 }
