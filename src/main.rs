@@ -11,6 +11,7 @@ mod gamepad;
 mod movement;
 mod player;
 mod resources;
+mod utils;
 use resources::{GameTextures, WindowSize};
 
 fn main() {
