@@ -28,6 +28,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)
+        .add_plugin((enemy::EnemyPlugin))
         .add_plugin(movement::MovementPlugin)
         .add_startup_system(setup_system)
         .run();

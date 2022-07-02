@@ -5,8 +5,6 @@ use crate::components::{Despawnable, Moveable, Enemy, Velocity};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
 use crate::resources::{GameTextures, WindowSize};
 
-
-
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
@@ -25,11 +23,11 @@ fn enemy_spawn_system(
 
     // Add the enemy 
     cmds.spawn_bundle(SpriteBundle {
-        texture: game_textures.player.clone(),
+        texture: game_textures.enemy.clone(),
         transform: Transform{
             scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
-            translation: Vec3::new( 200., 200., 0.),
-            //translation: Vec3::new( rng.gen_range(-win_size.w/2.0 ..win_size.w/2.0), rng.gen_range(-win_size.h/2.0 ..win_size.h/2.0), 0.),
+            //translation: Vec3::new( 200., 200., 0.),
+            translation: Vec3::new( rng.gen_range(-win_size.w/2.0 ..win_size.w/2.0), rng.gen_range(-win_size.h/2.0 ..win_size.h/2.0), 0.),
             ..Default::default()
         },
         ..Default::default()
