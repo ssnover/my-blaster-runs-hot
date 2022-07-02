@@ -4,6 +4,8 @@ use bevy::prelude::*;
 
 const QWARK_SPRITE: &str = "qwark.png";
 const QWARK_SIZE: (f32, f32) = (500., 500.);
+const ENEMY_SPRITE: &str = "tux.png";
+const ENEMY_SIZE: (f32, f32) = (500., 500.);
 
 mod components;
 mod constants;
@@ -12,6 +14,7 @@ mod movement;
 mod player;
 mod resources;
 use resources::{GameTextures, WindowSize};
+mod enemy;
 
 fn main() {
     App::new()
@@ -43,6 +46,7 @@ fn setup_system(mut cmds: Commands, asset_server: Res<AssetServer>, windows: Res
 
     let game_textures = GameTextures {
         player: asset_server.load(QWARK_SPRITE),
+        enemy: asset_server.load(ENEMY_SPRITE),
     };
     cmds.insert_resource(game_textures);
 }
