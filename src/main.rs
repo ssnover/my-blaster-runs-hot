@@ -5,6 +5,7 @@ use bevy::prelude::*;
 const QWARK_SPRITE: &str = "qwark.png";
 const QWARK_SIZE: (f32, f32) = (500., 500.);
 
+mod blaster;
 mod civilian;
 mod components;
 mod constants;
@@ -13,7 +14,9 @@ mod movement;
 mod player;
 mod resources;
 mod utils;
-use resources::{GameTextures, PlayerScore, WindowSize};
+use constants::*;
+use resources::{BlasterHeat, GameTextures, PlayerScore, WindowSize};
+use utils::CooldownTimer;
 
 fn main() {
     App::new()
@@ -50,4 +53,8 @@ fn setup_system(mut cmds: Commands, asset_server: Res<AssetServer>, windows: Res
     cmds.insert_resource(game_textures);
 
     cmds.insert_resource(PlayerScore(0));
+    cmds.insert_resource(BlasterHeat {
+        value: 0.,
+        overheat_cooldown_timer: CooldownTimer::from_seconds(COOLDOWN_TIME_SECONDS),
+    });
 }
