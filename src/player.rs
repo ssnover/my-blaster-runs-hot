@@ -115,15 +115,20 @@ fn player_fire_blaster_system(
 ) {
     let (tf, mut weapon_data) = query.get_single_mut().unwrap();
     weapon_data.fire_rate_timer.tick(time.delta());
-    blaster_heat.0 -= time.delta_seconds() * BLASTER_COOLOFF_MULTIPLIER;
+    blaster_heat.overheat_cooldown_timer.tick(time.delta());
+    blaster_heat.value -= time.delta_seconds() * BLASTER_COOLOFF_MULTIPLIER;
+
+    if blaster_heat.value >= MAX_BLASTER_HEAT {
+        blaster_heat.overheat_cooldown_timer.trigger();
+    }
 
     if weapon_data.firing
         && weapon_data.fire_rate_timer.ready()
-        && blaster_heat.0 < MAX_BLASTER_HEAT
+        && blaster_heat.overheat_cooldown_timer.ready()
     {
         weapon_data.fire_rate_timer.trigger();
-        blaster_heat.0 += BLASTER_SHOT_HEAT_ADDITION;
-        println!("Blaster Temp: {} C", blaster_heat.0);
+        blaster_heat.value += BLASTER_SHOT_HEAT_ADDITION;
+        println!("Blaster Temp: {} C", blaster_heat.value);
         blaster::create_blaster_shot(
             &mut cmds,
             tf.translation,
