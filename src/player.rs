@@ -111,7 +111,8 @@ fn player_fire_blaster_system(
     let (tf, mut weapon_data) = query.get_single_mut().unwrap();
     weapon_data.fire_rate_timer.tick(time.delta());
     blaster_heat.overheat_cooldown_timer.tick(time.delta());
-    blaster_heat.value -= time.delta_seconds() * BLASTER_COOLOFF_MULTIPLIER;
+    blaster_heat.value =
+        0f32.max(blaster_heat.value - (time.delta_seconds() * BLASTER_COOLOFF_MULTIPLIER));
 
     if blaster_heat.value >= MAX_BLASTER_HEAT {
         blaster_heat.overheat_cooldown_timer.trigger();
