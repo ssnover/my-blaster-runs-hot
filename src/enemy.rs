@@ -77,18 +77,18 @@ fn enemy_ai_system(
         //But it all diverges to player eventually
         for enemy in &enemy_position {
             if entity != *enemy.0 {
-                if (enemy_tf.translation.x - enemy.1.translation.x).abs() > 10.0 {
-                    x_sum = enemy.1.translation.x;
+                if (enemy_tf.translation.x - enemy.1.translation.x).abs() < 20.0 {
+                    x_sum = enemy.1.translation.x.powf(3.0);
                 }
-                if (enemy_tf.translation.y - enemy.1.translation.y).abs() > 10.0 {
-                    y_sum = enemy.1.translation.y;
+                if (enemy_tf.translation.y - enemy.1.translation.y).abs() < 20.0 {
+                    y_sum = enemy.1.translation.y.powf(3.0);
                 }
             }
         }
 
         let new_vel = Vec2::new(
-            player_tf.translation.x - enemy_tf.translation.x - 1.2*x_sum,
-            player_tf.translation.y - enemy_tf.translation.y - 1.2*y_sum
+            player_tf.translation.x - enemy_tf.translation.x - x_sum,
+            player_tf.translation.y - enemy_tf.translation.y - y_sum
         );
         *enemy_vel = Velocity(normalize_vec2(new_vel));
     }
