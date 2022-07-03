@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::components::{Despawnable, Moveable, NormalBlasterFire, Player, RangedWeapon, Size, Velocity};
+use crate::components::{
+    Despawnable, Moveable, NormalBlasterFire, Player, RangedWeapon, Size, Velocity,
+};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
 use crate::resources::{Controller, GameTextures, WindowSize};
 use crate::utils::CooldownTimer;

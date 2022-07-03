@@ -13,7 +13,7 @@ mod movement;
 mod player;
 mod resources;
 mod utils;
-use resources::{GameTextures, WindowSize, PlayerScore};
+use resources::{GameTextures, PlayerScore, WindowSize};
 
 fn main() {
     App::new()

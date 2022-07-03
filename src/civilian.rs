@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use rand::Rng;
 
-use crate::components::{Civilian, Moveable, Player, Velocity, Size};
-use crate::resources::{WindowSize, PlayerScore};
+use crate::components::{Civilian, Moveable, Player, Size, Velocity};
+use crate::resources::{PlayerScore, WindowSize};
 
 pub struct CivilianPlugin;
 
@@ -70,7 +70,12 @@ fn civilian_despawn_system(
     let (player_tf, player_size) = player_query.get_single().unwrap();
 
     for (entity, tf, civilian_size) in civilian_query.iter() {
-        let collision = collide(player_tf.translation, player_size.0, tf.translation, civilian_size.0);
+        let collision = collide(
+            player_tf.translation,
+            player_size.0,
+            tf.translation,
+            civilian_size.0,
+        );
         if collision.is_some() {
             // Rescued this civilian!
             score.0 += 100;
