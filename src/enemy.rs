@@ -9,7 +9,8 @@ pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PostStartup, enemy_spawn_system);
+        app.add_startup_system_to_stage(StartupStage::PostStartup, enemy_spawn_system)
+            .add_system(enemy_ai_system);
     }
 }
 
@@ -41,7 +42,7 @@ fn enemy_spawn_system(
     });
 }
 
-fn enemy_move_system(
+fn enemy_ai_system(
     mut cmds: Commands,
     mut self_query: Query<(&mut Velocity, &Transform)>, 
     query_player: Query<(&Transform), With<Player>>, 
