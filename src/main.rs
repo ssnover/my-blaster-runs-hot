@@ -13,7 +13,7 @@ mod movement;
 mod player;
 mod resources;
 mod utils;
-use resources::{GameTextures, WindowSize};
+use resources::{GameTextures, WindowSize, PlayerScore};
 
 fn main() {
     App::new()
@@ -48,4 +48,6 @@ fn setup_system(mut cmds: Commands, asset_server: Res<AssetServer>, windows: Res
         player: asset_server.load(QWARK_SPRITE),
     };
     cmds.insert_resource(game_textures);
+
+    cmds.insert_resource(PlayerScore(0));
 }
