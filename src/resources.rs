@@ -14,3 +14,5 @@ pub struct Controller(pub Gamepad);
 
 #[derive(Deref, DerefMut)]
 pub struct PlayerScore(pub usize);
+
+pub struct BlasterHeat(pub f32);

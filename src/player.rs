@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 
+use crate::blaster;
 use crate::components::{
     Despawnable, Moveable, NormalBlasterFire, Player, RangedWeapon, Size, Velocity,
 };
-use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
-use crate::resources::{Controller, GameTextures, WindowSize};
+use crate::constants::*;
+use crate::resources::{Controller, GameTextures, WindowSize, BlasterHeat};
 use crate::utils::CooldownTimer;
 
 pub struct PlayerPlugin;
@@ -109,31 +110,23 @@ fn player_control_system(
 fn player_fire_blaster_system(
     mut cmds: Commands,
     time: Res<Time>,
+    mut blaster_heat: ResMut<BlasterHeat>,
     mut query: Query<(&Transform, &mut RangedWeapon), With<Player>>,
 ) {
     let (tf, mut weapon_data) = query.get_single_mut().unwrap();
     weapon_data.fire_rate_timer.tick(time.delta());
+    blaster_heat.0 -= time.delta_seconds() * BLASTER_COOLOFF_MULTIPLIER;
 
-    if weapon_data.firing && weapon_data.fire_rate_timer.ready() {
+    if weapon_data.firing && weapon_data.fire_rate_timer.ready() && blaster_heat.0 < MAX_BLASTER_HEAT {
         weapon_data.fire_rate_timer.trigger();
-        cmds.spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgb_u8(240, 0, 15),
-                custom_size: Some(Vec2::new(20., 20.)),
-                ..Default::default()
-            },
-            transform: Transform {
-                translation: Vec3::new(tf.translation.x, tf.translation.y, 1.),
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(NormalBlasterFire)
-        .insert(Despawnable)
-        .insert(Velocity::from(weapon_data.aim_direction))
-        .insert(Moveable {
-            solid: false,
-            speed_multiplier: 1.5,
-        });
+        blaster_heat.0 += BLASTER_SHOT_HEAT_ADDITION;
+        println!("Blaster Temp: {} C", blaster_heat.0);
+        blaster::create_blaster_shot(
+            &mut cmds,
+            tf.translation,
+            weapon_data.aim_direction,
+            Color::rgb_u8(240, 0, 15),
+            true,
+        );
     }
 }
