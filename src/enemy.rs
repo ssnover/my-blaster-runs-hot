@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::components::{Despawnable, Moveable, Enemy, Velocity};
+use crate::components::{Despawnable, Moveable, Enemy, Velocity, Player};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
 use crate::resources::{GameTextures, WindowSize};
 
@@ -39,4 +39,21 @@ fn enemy_spawn_system(
         speed_multiplier: 1.,
         ..Default::default()
     });
+}
+
+fn enemy_move_system(
+    mut cmds: Commands,
+    mut self_query: Query<(&mut Velocity, &Transform)>, 
+    query_player: Query<(&Transform), With<Player>>, 
+    query_enemy: Query<(&Transform, &mut Velocity), With<Enemy>>
+) {
+    let player_tf = query_player.get_single().unwrap();
+
+    for (mut self_vel, mut enemy_tf) in self_query.iter_mut() {
+        let new_vel = Vec2::new(
+            player_tf.translation.x - enemy_tf.translation.x,
+            player_tf.translation.y - enemy_tf.translation.y
+        );
+        *self_vel = Velocity(new_vel);
+    }
 }
