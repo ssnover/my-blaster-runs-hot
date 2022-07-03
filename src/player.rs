@@ -1,16 +1,17 @@
 use bevy::prelude::*;
 
-use crate::components::{Despawnable, Moveable, NormalBlasterFire, Player, RangedWeapon, Velocity};
-use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
-use crate::resources::{Controller, GameTextures, WindowSize};
+use crate::blaster;
+use crate::components::{Moveable, NormalBlasterFire, Player, RangedWeapon, Size, Velocity};
+use crate::constants::*;
+use crate::resources::{BlasterHeat, Controller, GameTextures, WindowSize};
+use crate::utils::CooldownTimer;
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::PostStartup, player_spawn_system)
-            .add_system(player_velocity_control_gamepad_system)
-            .add_system(player_velocity_control_keyboard_system)
+            .add_system(player_control_system)
             .add_system(player_fire_blaster_system);
     }
 }
@@ -32,21 +33,25 @@ fn player_spawn_system(
     .insert(Player)
     .insert(Velocity::from(Vec2::new(0., 0.)))
     .insert(Moveable {
-        speed_multiplier: 2.,
+        speed_multiplier: 1.,
         ..Default::default()
     })
+    .insert(Size(Vec2::new(50., 50.)))
     .insert(RangedWeapon {
+        aim_direction: Vec2::new(1., 0.),
+        fire_rate_timer: CooldownTimer::from_seconds(0.5),
         ..Default::default()
     });
 }
 
-fn player_velocity_control_gamepad_system(
-    mut query: Query<&mut Velocity, With<Player>>,
+fn player_control_system(
+    mut query: Query<(&mut Velocity, &mut RangedWeapon), With<Player>>,
     controller: Option<Res<Controller>>,
+    keys: Res<Input<KeyCode>>,
     axes: Res<Axis<GamepadAxis>>,
     buttons: Res<Input<GamepadButton>>,
 ) {
-    let mut velocity = query.get_single_mut().unwrap();
+    let (mut velocity, mut weapon_data) = query.get_single_mut().unwrap();
     if let Some(controller) = controller {
         let axis_lx = GamepadAxis(controller.0, GamepadAxisType::LeftStickX);
         let axis_ly = GamepadAxis(controller.0, GamepadAxisType::LeftStickY);
@@ -55,16 +60,17 @@ fn player_velocity_control_gamepad_system(
             velocity.x = x;
             velocity.y = y;
         }
-    }
-}
+        let normal_fire_button = GamepadButton(controller.0, GamepadButtonType::LeftTrigger);
+        weapon_data.firing = buttons.pressed(normal_fire_button);
 
-fn player_velocity_control_keyboard_system(
-    mut query: Query<(&mut Velocity, &mut RangedWeapon), With<Player>>,
-    controller: Option<Res<Controller>>,
-    keys: Res<Input<KeyCode>>,
-) {
-    let (mut velocity, mut weapon_data) = query.get_single_mut().unwrap();
-    if controller.is_none() {
+        let axis_rx = GamepadAxis(controller.0, GamepadAxisType::RightStickX);
+        let axis_ry = GamepadAxis(controller.0, GamepadAxisType::RightStickY);
+        if let (Some(x), Some(y)) = (axes.get(axis_rx), axes.get(axis_ry)) {
+            if x.abs() > 0.2 || y.abs() > 0.2 {
+                weapon_data.aim_direction = Vec2::new(x, y);
+            }
+        }
+    } else {
         if keys.pressed(KeyCode::W) {
             velocity.y = 1.;
         } else if keys.pressed(KeyCode::S) {
@@ -80,38 +86,50 @@ fn player_velocity_control_keyboard_system(
             velocity.x = 0.;
         }
 
-        if keys.pressed(KeyCode::Comma) {
-            weapon_data.firing = true;
-        } else {
-            weapon_data.firing = false;
+        weapon_data.firing = keys.pressed(KeyCode::RShift);
+        if keys.pressed(KeyCode::Up) {
+            weapon_data.aim_direction.y = 1.;
+        }
+        if keys.pressed(KeyCode::Down) {
+            weapon_data.aim_direction.y = -1.;
+        }
+        if keys.pressed(KeyCode::Left) {
+            weapon_data.aim_direction.x = -1.;
+        }
+        if keys.pressed(KeyCode::Right) {
+            weapon_data.aim_direction.x = 1.;
         }
     }
 }
 
 fn player_fire_blaster_system(
     mut cmds: Commands,
-    query: Query<(&Transform, &RangedWeapon), With<Player>>,
+    time: Res<Time>,
+    mut blaster_heat: ResMut<BlasterHeat>,
+    mut query: Query<(&Transform, &mut RangedWeapon), With<Player>>,
 ) {
-    let (tf, weapon_data) = query.get_single().unwrap();
-    if weapon_data.firing {
-        cmds.spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgb_u8(240, 0, 15),
-                custom_size: Some(Vec2::new(20., 20.)),
-                ..Default::default()
-            },
-            transform: Transform {
-                translation: Vec3::new(tf.translation.x, tf.translation.y, 1.),
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(NormalBlasterFire)
-        .insert(Despawnable)
-        .insert(Velocity::from(Vec2::new(1., 1.)))
-        .insert(Moveable {
-            solid: false,
-            speed_multiplier: 1.5,
-        });
+    let (tf, mut weapon_data) = query.get_single_mut().unwrap();
+    weapon_data.fire_rate_timer.tick(time.delta());
+    blaster_heat.overheat_cooldown_timer.tick(time.delta());
+    blaster_heat.value -= time.delta_seconds() * BLASTER_COOLOFF_MULTIPLIER;
+
+    if blaster_heat.value >= MAX_BLASTER_HEAT {
+        blaster_heat.overheat_cooldown_timer.trigger();
+    }
+
+    if weapon_data.firing
+        && weapon_data.fire_rate_timer.ready()
+        && blaster_heat.overheat_cooldown_timer.ready()
+    {
+        weapon_data.fire_rate_timer.trigger();
+        blaster_heat.value += BLASTER_SHOT_HEAT_ADDITION;
+        println!("Blaster Temp: {} C", blaster_heat.value);
+        blaster::create_blaster_shot(
+            &mut cmds,
+            tf.translation,
+            weapon_data.aim_direction,
+            Color::rgb_u8(240, 0, 15),
+            true,
+        );
     }
 }

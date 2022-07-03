@@ -1,3 +1,4 @@
+use crate::utils::CooldownTimer;
 use bevy::prelude::*;
 
 #[derive(Component, Deref, DerefMut)]
@@ -28,6 +29,12 @@ impl Default for Moveable {
 pub struct Player;
 
 #[derive(Component)]
+pub struct FromPlayer;
+
+#[derive(Component)]
+pub struct FromEnemy;
+
+#[derive(Component)]
 pub struct Enemy;
 
 #[derive(Component)]
@@ -36,11 +43,22 @@ pub struct Civilian;
 #[derive(Component)]
 pub struct NormalBlasterFire;
 
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct RangedWeapon {
     pub aim_direction: Vec2,
     pub firing: bool,
+    pub fire_rate_timer: CooldownTimer,
+}
+
+impl Default for RangedWeapon {
+    fn default() -> Self {
+        Self {
+            aim_direction: Default::default(),
+            firing: Default::default(),
+            fire_rate_timer: CooldownTimer::from_seconds(1.),
+        }
+    }
 }
 
 #[derive(Component)]
-pub struct Despawnable;
+pub struct Size(pub Vec2);

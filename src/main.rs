@@ -7,15 +7,18 @@ const QWARK_SIZE: (f32, f32) = (500., 500.);
 const ENEMY_SPRITE: &str = "tux.png";
 const ENEMY_SIZE: (f32, f32) = (500., 500.);
 
+mod blaster;
+mod civilian;
 mod components;
 mod constants;
 mod gamepad;
 mod movement;
 mod player;
 mod resources;
-use resources::{GameTextures, WindowSize};
-mod enemy;
 mod utils;
+use constants::*;
+use resources::{BlasterHeat, GameTextures, PlayerScore, WindowSize};
+use utils::CooldownTimer;
 
 fn main() {
     App::new()
@@ -27,6 +30,7 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(civilian::CivilianPlugin)
         .add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)
         .add_plugin((enemy::EnemyPlugin))
@@ -51,4 +55,10 @@ fn setup_system(mut cmds: Commands, asset_server: Res<AssetServer>, windows: Res
         enemy: asset_server.load(ENEMY_SPRITE),
     };
     cmds.insert_resource(game_textures);
+
+    cmds.insert_resource(PlayerScore(0));
+    cmds.insert_resource(BlasterHeat {
+        value: 0.,
+        overheat_cooldown_timer: CooldownTimer::from_seconds(COOLDOWN_TIME_SECONDS),
+    });
 }
