@@ -15,9 +15,10 @@ mod gamepad;
 mod movement;
 mod player;
 mod resources;
+mod ui;
 mod utils;
 use constants::*;
-use resources::{BlasterHeat, GameTextures, PlayerScore, WindowSize};
+use resources::{BlasterHeat, GameFont, GameTextures, PlayerScore, WindowSize};
 use utils::CooldownTimer;
 mod enemy;
 
@@ -36,6 +37,7 @@ fn main() {
         .add_plugin(player::PlayerPlugin)
         .add_plugin(enemy::EnemyPlugin)
         .add_plugin(movement::MovementPlugin)
+        .add_plugin(ui::UiPlugin)
         .add_startup_system(setup_system)
         .run();
 }
@@ -62,4 +64,7 @@ fn setup_system(mut cmds: Commands, asset_server: Res<AssetServer>, windows: Res
         value: 0.,
         overheat_cooldown_timer: CooldownTimer::from_seconds(COOLDOWN_TIME_SECONDS),
     });
+
+    let game_font = GameFont(asset_server.load("FiraSans-Bold.ttf"));
+    cmds.insert_resource(game_font);
 }
