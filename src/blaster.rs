@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::{FromEnemy, FromPlayer, Moveable, NormalBlasterFire, Velocity, Size};
+use crate::components::{FromEnemy, FromPlayer, Moveable, NormalBlasterFire, Size, Velocity};
 
 pub fn create_blaster_shot(
     cmds: &mut Commands,
@@ -22,7 +22,7 @@ pub fn create_blaster_shot(
         ..Default::default()
     });
     entity_cmds
-        .insert(Size(Vec2::new(50.,50.)))
+        .insert(Size(Vec2::new(50., 50.)))
         .insert(NormalBlasterFire)
         .insert(Velocity::from(direction))
         .insert(Moveable {

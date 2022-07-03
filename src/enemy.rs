@@ -3,8 +3,11 @@ use bevy::sprite::collide_aabb::collide;
 use bevy::utils::HashMap;
 use rand::Rng;
 
-use crate::components::{Enemy, Moveable, Player, Velocity, FromPlayer, Size, NormalBlasterFire};
-use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP, ENEMY_REPULSION_FORCE, PLAYER_ATTRACTION_FORCE, ENEMY_REPULSION_RADIUS};
+use crate::components::{Enemy, FromPlayer, Moveable, NormalBlasterFire, Player, Size, Velocity};
+use crate::constants::{
+    BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, PLAYER_ATTRACTION_FORCE,
+    SPRITE_SCALE, TIME_STEP,
+};
 use crate::resources::{GameTextures, WindowSize};
 use crate::utils::normalize_vec2;
 use crate::PlayerScore;
@@ -14,7 +17,8 @@ pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::PostStartup, enemy_spawn_system)
-            .add_system(enemy_ai_system);
+            .add_system(enemy_ai_system)
+            .add_system(enemy_despawn_system);
     }
 }
 
@@ -42,7 +46,7 @@ fn enemy_spawn_system(
             ..Default::default()
         })
         .insert(Enemy)
-        .insert(Size(Vec2::new(50.,50.)))
+        .insert(Size(Vec2::new(50., 50.)))
         .insert(Velocity::from(Vec2::new(0., 0.)))
         .insert(Moveable {
             //Slower than player
@@ -74,11 +78,14 @@ fn enemy_ai_system(
         //But it all diverges to player eventually
         for (enemy, tf) in &enemy_position {
             if entity != *enemy {
-                if (tf.x - enemy_tf.translation.x).abs() < ENEMY_REPULSION_RADIUS{
-                    x_offset += (enemy_tf.translation.x/enemy_tf.translation.x.abs())/(tf.x - enemy_tf.translation.x) ;
+                if (tf.x - enemy_tf.translation.x).abs() < ENEMY_REPULSION_RADIUS {
+                    x_offset += (enemy_tf.translation.x / enemy_tf.translation.x.abs())
+                        / (tf.x - enemy_tf.translation.x);
                 }
                 if (tf.y - enemy_tf.translation.y).abs() < ENEMY_REPULSION_RADIUS {
-                    y_offset += enemy_tf.translation.y/enemy_tf.translation.y.abs()/(tf.y - enemy_tf.translation.y);
+                    y_offset += enemy_tf.translation.y
+                        / enemy_tf.translation.y.abs()
+                        / (tf.y - enemy_tf.translation.y);
                 }
             }
         }
@@ -87,7 +94,8 @@ fn enemy_ai_system(
             player_tf.translation.x - enemy_tf.translation.x,
             player_tf.translation.y - enemy_tf.translation.y,
         );
-        let mut total_vel = PLAYER_ATTRACTION_FORCE*normalize_vec2(player_vel) - ENEMY_REPULSION_FORCE*Vec2::new(x_offset, y_offset);
+        let mut total_vel = PLAYER_ATTRACTION_FORCE * normalize_vec2(player_vel)
+            - ENEMY_REPULSION_FORCE * Vec2::new(x_offset, y_offset);
         x_offset = 0.0;
         y_offset = 0.0;
         *enemy_vel = Velocity(total_vel);
@@ -97,26 +105,23 @@ fn enemy_ai_system(
 fn enemy_despawn_system(
     mut cmds: Commands,
     enemy_query: Query<(Entity, &Transform, &Size), With<Enemy>>,
-    blaster_query: Query<(&Transform, &Size), (With<NormalBlasterFire>)>,
+    blaster_query: Query<(Entity, &Transform, &Size), (With<FromPlayer>, With<NormalBlasterFire>)>,
     mut score: ResMut<PlayerScore>,
 ) {
-
-    for (blaster_tf, blaster_size) in blaster_query.iter() {
-        println!("MAD");
-        println!("blaster_tf: {} blaster_size: {}",blaster_tf.translation, blaster_size.0);
+    for (blaster_entity, blaster_tf, blaster_size) in blaster_query.iter() {
         for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
             let collision = collide(
-                enemy_tf.translation, 
-                enemy_size.0, 
-                blaster_tf.translation, 
-                blaster_size.0
+                enemy_tf.translation,
+                enemy_size.0,
+                blaster_tf.translation,
+                blaster_size.0,
             );
             if collision.is_some() {
                 score.0 += 3;
                 cmds.entity(enemy_entity).despawn_recursive();
+                cmds.entity(blaster_entity);
                 println!("Current Score: {}", score.0);
             }
-        }    
+        }
     }
 }
-
