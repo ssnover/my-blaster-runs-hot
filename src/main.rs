@@ -4,6 +4,8 @@ use bevy::prelude::*;
 
 const QWARK_SPRITE: &str = "qwark.png";
 const QWARK_SIZE: (f32, f32) = (500., 500.);
+const ENEMY_SPRITE: &str = "tux.png";
+const ENEMY_SIZE: (f32, f32) = (500., 500.);
 
 mod blaster;
 mod civilian;
@@ -17,6 +19,7 @@ mod utils;
 use constants::*;
 use resources::{BlasterHeat, GameTextures, PlayerScore, WindowSize};
 use utils::CooldownTimer;
+mod enemy;
 
 fn main() {
     App::new()
@@ -31,6 +34,7 @@ fn main() {
         .add_plugin(civilian::CivilianPlugin)
         .add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)
+        .add_plugin((enemy::EnemyPlugin))
         .add_plugin(movement::MovementPlugin)
         .add_startup_system(setup_system)
         .run();
@@ -49,6 +53,7 @@ fn setup_system(mut cmds: Commands, asset_server: Res<AssetServer>, windows: Res
 
     let game_textures = GameTextures {
         player: asset_server.load(QWARK_SPRITE),
+        enemy: asset_server.load(ENEMY_SPRITE),
     };
     cmds.insert_resource(game_textures);
 

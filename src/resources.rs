@@ -9,6 +9,7 @@ pub struct WindowSize {
 
 pub struct GameTextures {
     pub player: Handle<Image>,
+    pub enemy: Handle<Image>,
 }
 
 #[derive(Deref, DerefMut)]
