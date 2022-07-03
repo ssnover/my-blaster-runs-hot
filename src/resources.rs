@@ -11,6 +11,8 @@ pub struct GameTextures {
     pub player: Handle<Image>,
 }
 
+pub struct GameFont(pub Handle<Font>);
+
 #[derive(Deref, DerefMut)]
 pub struct Controller(pub Gamepad);
 
