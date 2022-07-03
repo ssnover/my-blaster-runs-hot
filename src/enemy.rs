@@ -3,7 +3,7 @@ use bevy::sprite::collide_aabb::collide;
 use bevy::utils::HashMap;
 use rand::Rng;
 
-use crate::components::{Enemy, Moveable, Player, Velocity, FromPlayer, Size};
+use crate::components::{Enemy, Moveable, Player, Velocity, FromPlayer, Size, NormalBlasterFire};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP, ENEMY_REPULSION_FORCE, PLAYER_ATTRACTION_FORCE, ENEMY_REPULSION_RADIUS};
 use crate::resources::{GameTextures, WindowSize};
 use crate::utils::normalize_vec2;
@@ -97,11 +97,13 @@ fn enemy_ai_system(
 fn enemy_despawn_system(
     mut cmds: Commands,
     enemy_query: Query<(Entity, &Transform, &Size), With<Enemy>>,
-    blaster_query: Query<(&Transform, &Size), With<FromPlayer>>,
+    blaster_query: Query<(&Transform, &Size), (With<NormalBlasterFire>)>,
     mut score: ResMut<PlayerScore>,
 ) {
 
     for (blaster_tf, blaster_size) in blaster_query.iter() {
+        println!("MAD");
+        println!("blaster_tf: {} blaster_size: {}",blaster_tf.translation, blaster_size.0);
         for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
             let collision = collide(
                 enemy_tf.translation, 
