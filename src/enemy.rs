@@ -4,6 +4,7 @@ use rand::Rng;
 use crate::components::{Despawnable, Moveable, Enemy, Velocity, Player};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
 use crate::resources::{GameTextures, WindowSize};
+use crate::utils::normalize_vec2;
 
 pub struct EnemyPlugin;
 
@@ -43,11 +44,13 @@ fn enemy_spawn_system(
     });
 }
 
+
+//query_enemy: Query<(&Transform, &mut Velocity), With<Enemy>, Without<self????>>
 fn enemy_ai_system(
     mut cmds: Commands,
     mut self_query: Query<(&mut Velocity, &Transform)>, 
-    query_player: Query<(&Transform), With<Player>>, 
-    query_enemy: Query<(&Transform, &mut Velocity), With<Enemy>>
+    query_player: Query<(&Transform), With<Player>>
+    
 ) {
     let player_tf = query_player.get_single().unwrap();
 
@@ -56,7 +59,6 @@ fn enemy_ai_system(
             player_tf.translation.x - enemy_tf.translation.x,
             player_tf.translation.y - enemy_tf.translation.y
         );
-        println!("new_vel {}", new_vel);
-        *self_vel = Velocity(new_vel);
+        *self_vel = Velocity(normalize_vec2(new_vel));
     }
 }

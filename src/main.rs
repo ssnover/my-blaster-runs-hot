@@ -15,6 +15,7 @@ mod player;
 mod resources;
 use resources::{GameTextures, WindowSize};
 mod enemy;
+mod utils;
 
 fn main() {
     App::new()
