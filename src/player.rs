@@ -5,7 +5,7 @@ use crate::components::{
     Despawnable, Moveable, NormalBlasterFire, Player, RangedWeapon, Size, Velocity,
 };
 use crate::constants::*;
-use crate::resources::{Controller, GameTextures, WindowSize, BlasterHeat};
+use crate::resources::{BlasterHeat, Controller, GameTextures, WindowSize};
 use crate::utils::CooldownTimer;
 
 pub struct PlayerPlugin;
@@ -117,7 +117,10 @@ fn player_fire_blaster_system(
     weapon_data.fire_rate_timer.tick(time.delta());
     blaster_heat.0 -= time.delta_seconds() * BLASTER_COOLOFF_MULTIPLIER;
 
-    if weapon_data.firing && weapon_data.fire_rate_timer.ready() && blaster_heat.0 < MAX_BLASTER_HEAT {
+    if weapon_data.firing
+        && weapon_data.fire_rate_timer.ready()
+        && blaster_heat.0 < MAX_BLASTER_HEAT
+    {
         weapon_data.fire_rate_timer.trigger();
         blaster_heat.0 += BLASTER_SHOT_HEAT_ADDITION;
         println!("Blaster Temp: {} C", blaster_heat.0);

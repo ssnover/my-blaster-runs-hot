@@ -14,7 +14,7 @@ mod movement;
 mod player;
 mod resources;
 mod utils;
-use resources::{GameTextures, PlayerScore, WindowSize, BlasterHeat};
+use resources::{BlasterHeat, GameTextures, PlayerScore, WindowSize};
 
 fn main() {
     App::new()
