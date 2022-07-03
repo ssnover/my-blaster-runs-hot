@@ -62,3 +62,6 @@ impl Default for RangedWeapon {
 
 #[derive(Component)]
 pub struct Size(pub Vec2);
+
+#[derive(Component)]
+pub struct ScoreUi;
