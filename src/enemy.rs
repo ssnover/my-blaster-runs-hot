@@ -44,8 +44,8 @@ fn enemy_spawn_system(
     });
 }
 
-
 //query_enemy: Query<(&Transform, &mut Velocity), With<Enemy>, Without<self????>>
+//Not sure how to consider other enemies because add the above query creates a query conflict? Two queries getting the same thing = sad
 fn enemy_ai_system(
     mut cmds: Commands,
     mut self_query: Query<(&mut Velocity, &Transform)>, 
