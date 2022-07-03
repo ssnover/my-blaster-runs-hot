@@ -5,6 +5,7 @@ use bevy::prelude::*;
 const QWARK_SPRITE: &str = "qwark.png";
 const QWARK_SIZE: (f32, f32) = (500., 500.);
 
+mod civilian;
 mod components;
 mod constants;
 mod gamepad;
@@ -24,6 +25,7 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(civilian::CivilianPlugin)
         .add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)
         .add_plugin(movement::MovementPlugin)

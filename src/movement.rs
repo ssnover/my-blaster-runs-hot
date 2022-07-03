@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::components::{Despawnable, Moveable, Velocity};
 use crate::constants::{BASE_SPEED, TIME_STEP};
 use crate::resources::WindowSize;
+use crate::utils::normalize_vec2;
 
 const DESPAWN_MARGIN: f32 = 200.;
 const MOVEMENT_BOUND_MARGIN: f32 = 50.;
@@ -20,6 +21,8 @@ fn movement_system(
     mut query: Query<(&Velocity, &Moveable, &mut Transform)>,
 ) {
     for (velocity, moveable, mut tf) in query.iter_mut() {
+        let velocity = normalize_vec2(velocity.0);
+
         let x_position_delta = velocity.x * TIME_STEP * BASE_SPEED * moveable.speed_multiplier;
         let y_position_delta = velocity.y * TIME_STEP * BASE_SPEED * moveable.speed_multiplier;
 
