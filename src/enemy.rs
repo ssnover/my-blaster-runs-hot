@@ -119,8 +119,7 @@ fn enemy_despawn_system(
             if collision.is_some() {
                 score.0 += 3;
                 cmds.entity(enemy_entity).despawn_recursive();
-                cmds.entity(blaster_entity);
-                println!("Current Score: {}", score.0);
+                cmds.entity(blaster_entity).despawn_recursive();
             }
         }
     }
