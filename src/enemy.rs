@@ -72,17 +72,22 @@ fn enemy_ai_system(
     }
 
     for (entity, mut enemy_vel, enemy_tf) in enemy_query.iter_mut() {
-        //This approach has to be naive
-        
-        // let new_vel = Vec2::new(
-        //     player_tf.translation.x - enemy_tf.translation.x ,
-        //     player_tf.translation.y - enemy_tf.translation.y
-        // );
+
+        for enemy in &enemy_position {
+            if entity != *enemy.0 {
+                if (enemy_tf.translation.x - enemy.1.translation.x).abs() > 400.0 {
+                    x_sum = enemy_tf.translation.x - enemy.1.translation.x;
+                }
+                if (enemy_tf.translation.y - enemy.1.translation.y).abs() > 400.0 {
+                    y_sum = enemy_tf.translation.y - enemy.1.translation.y;
+                }
+            }
+        }
+
         let new_vel = Vec2::new(
-            player_tf.translation.x - enemy_tf.translation.x - x_sum/entity_counter,
-            player_tf.translation.y - enemy_tf.translation.y - y_sum/entity_counter
+            player_tf.translation.x - enemy_tf.translation.x - x_sum,
+            player_tf.translation.y - enemy_tf.translation.y - y_sum
         );
         *enemy_vel = Velocity(normalize_vec2(new_vel));
     }
-
 }
