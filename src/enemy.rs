@@ -1,9 +1,8 @@
 use bevy::prelude::*;
-use bevy::scene::serde::ENTITY_FIELD_ENTITY;
 use bevy::utils::HashMap;
 use rand::Rng;
 
-use crate::components::{Despawnable, Moveable, Enemy, Velocity, Player};
+use crate::components::{Enemy, Moveable, Player, Velocity};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
 use crate::resources::{GameTextures, WindowSize};
 use crate::utils::normalize_vec2;
@@ -22,23 +21,26 @@ fn enemy_spawn_system(
     game_textures: Res<GameTextures>,
     win_size: Res<WindowSize>,
 ) {
-    
     let mut rng = rand::thread_rng();
 
-    // Add the enemy 
+    // Add the enemy
     for i in 0..5 {
         cmds.spawn_bundle(SpriteBundle {
             texture: game_textures.enemy.clone(),
-            transform: Transform{
+            transform: Transform {
                 scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
                 //translation: Vec3::new( 200., 200., 0.),
-                translation: Vec3::new( rng.gen_range(-win_size.w/2.0 ..win_size.w/2.0), rng.gen_range(-win_size.h/2.0 ..win_size.h/2.0), 0.),
+                translation: Vec3::new(
+                    rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
+                    rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
+                    0.,
+                ),
                 ..Default::default()
             },
             ..Default::default()
         })
         .insert(Enemy)
-        .insert(Velocity::from(Vec2::new(0.,0.)))
+        .insert(Velocity::from(Vec2::new(0., 0.)))
         .insert(Moveable {
             //Slower than player
             solid: true,
@@ -46,16 +48,12 @@ fn enemy_spawn_system(
             ..Default::default()
         });
     }
-    
 }
 
-//query_enemy: Query<(&Transform, &mut Velocity), With<Enemy>, Without<self????>>
-//Not sure how to consider other enemies because add the above query creates a query conflict? Two queries getting the same thing = sad
 fn enemy_ai_system(
     mut cmds: Commands,
     mut enemy_query: Query<(Entity, &mut Velocity, &Transform), With<Enemy>>,
-    query_player: Query<(&Transform), With<Player>>
-    
+    query_player: Query<(&Transform), With<Player>>,
 ) {
     let player_tf = query_player.get_single().unwrap();
     let mut x_offset = 0.0;
@@ -67,25 +65,24 @@ fn enemy_ai_system(
     for (entity, _, enemy_tf) in enemy_query.iter() {
         enemy_position.insert(entity, enemy_tf.clone());
     }
-
+    
     for (entity, mut enemy_vel, enemy_tf) in enemy_query.iter_mut() {
-
         //These random constants need to be changed and we need some way to know that the enemy cannot be the position of other enemies
         //But it all diverges to player eventually
-        for enemy in &enemy_position {
-            if entity != *enemy.0 {
-                if (enemy_tf.translation.x - enemy.1.translation.x).abs() < 20.0 {
-                    x_offset = enemy.1.translation.x.powf(3.0);
+        for (enemy, tf) in enemy_position {
+            if entity != enemy {
+                if (tf.translation.x - enemy_tf.translation.x).abs() < 20.0 {
+                    x_offset = enemy_tf.translation.x.powf(3.0);
                 }
-                if (enemy_tf.translation.y - enemy.1.translation.y).abs() < 20.0 {
-                    y_offset = enemy.1.translation.y.powf(3.0);
+                if (tf.translation.y - enemy_tf.translation.y).abs() < 20.0 {
+                    y_offset = enemy_tf.translation.y.powf(3.0);
                 }
             }
         }
 
         let new_vel = Vec2::new(
             player_tf.translation.x - enemy_tf.translation.x - x_offset,
-            player_tf.translation.y - enemy_tf.translation.y - y_offset
+            player_tf.translation.y - enemy_tf.translation.y - y_offset,
         );
         *enemy_vel = Velocity(normalize_vec2(new_vel));
     }

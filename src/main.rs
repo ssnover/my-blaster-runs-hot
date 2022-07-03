@@ -19,6 +19,7 @@ mod utils;
 use constants::*;
 use resources::{BlasterHeat, GameTextures, PlayerScore, WindowSize};
 use utils::CooldownTimer;
+mod enemy;
 
 fn main() {
     App::new()
