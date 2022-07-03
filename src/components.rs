@@ -65,3 +65,6 @@ pub struct Size(pub Vec2);
 
 #[derive(Component)]
 pub struct ScoreUi;
+
+#[derive(Component)]
+pub struct Health(pub u32);
