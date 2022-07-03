@@ -3,7 +3,7 @@ use bevy::utils::HashMap;
 use rand::Rng;
 
 use crate::components::{Enemy, Moveable, Player, Velocity};
-use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
+use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP, ENEMY_REPULSION_FORCE, PLAYER_ATTRACTION_FORCE, ENEMY_REPULSION_RADIUS};
 use crate::resources::{GameTextures, WindowSize};
 use crate::utils::normalize_vec2;
 
@@ -24,7 +24,7 @@ fn enemy_spawn_system(
     let mut rng = rand::thread_rng();
 
     // Add the enemy
-    for i in 0..5 {
+    for i in 0..3 {
         cmds.spawn_bundle(SpriteBundle {
             texture: game_textures.enemy.clone(),
             transform: Transform {
@@ -71,21 +71,22 @@ fn enemy_ai_system(
         //But it all diverges to player eventually
         for (enemy, tf) in &enemy_position {
             if entity != *enemy {
-                if (tf.x - enemy_tf.translation.x).abs() < 10.0 {
+                if (tf.x - enemy_tf.translation.x).abs() < ENEMY_REPULSION_RADIUS{
                     x_offset += enemy_tf.translation.x/enemy_tf.translation.x.abs();
                 }
-                if (tf.y - enemy_tf.translation.y).abs() < 10.0 {
+                if (tf.y - enemy_tf.translation.y).abs() < ENEMY_REPULSION_RADIUS {
                     y_offset += enemy_tf.translation.x/enemy_tf.translation.x.abs();
                 }
             }
         }
 
-        let new_vel = Vec2::new(
+        let player_vel = Vec2::new(
             player_tf.translation.x - enemy_tf.translation.x,
             player_tf.translation.y - enemy_tf.translation.y,
         );
-        let mut latest_vel = normalize_vec2(new_vel) - Vec2::new(x_offset, y_offset);
-
-        *enemy_vel = Velocity(latest_vel);
+        let mut total_vel = PLAYER_ATTRACTION_FORCE*normalize_vec2(player_vel) - ENEMY_REPULSION_FORCE*Vec2::new(x_offset, y_offset);
+        x_offset = 0.0;
+        y_offset = 0.0;
+        *enemy_vel = Velocity(total_vel);
     }
 }
