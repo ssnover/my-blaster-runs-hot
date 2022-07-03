@@ -63,27 +63,29 @@ fn enemy_ai_system(
     let mut enemy_position = HashMap::default();
 
     for (entity, _, enemy_tf) in enemy_query.iter() {
-        enemy_position.insert(entity, enemy_tf.clone());
+        enemy_position.insert(entity, enemy_tf.translation);
     }
-    
+
     for (entity, mut enemy_vel, enemy_tf) in enemy_query.iter_mut() {
         //These random constants need to be changed and we need some way to know that the enemy cannot be the position of other enemies
         //But it all diverges to player eventually
-        for (enemy, tf) in enemy_position {
-            if entity != enemy {
-                if (tf.translation.x - enemy_tf.translation.x).abs() < 20.0 {
-                    x_offset = enemy_tf.translation.x.powf(3.0);
+        for (enemy, tf) in &enemy_position {
+            if entity != *enemy {
+                if (tf.x - enemy_tf.translation.x).abs() < 10.0 {
+                    x_offset += enemy_tf.translation.x/enemy_tf.translation.x.abs();
                 }
-                if (tf.translation.y - enemy_tf.translation.y).abs() < 20.0 {
-                    y_offset = enemy_tf.translation.y.powf(3.0);
+                if (tf.y - enemy_tf.translation.y).abs() < 10.0 {
+                    y_offset += enemy_tf.translation.x/enemy_tf.translation.x.abs();
                 }
             }
         }
 
         let new_vel = Vec2::new(
-            player_tf.translation.x - enemy_tf.translation.x - x_offset,
-            player_tf.translation.y - enemy_tf.translation.y - y_offset,
+            player_tf.translation.x - enemy_tf.translation.x,
+            player_tf.translation.y - enemy_tf.translation.y,
         );
-        *enemy_vel = Velocity(normalize_vec2(new_vel));
+        let mut latest_vel = normalize_vec2(new_vel) - Vec2::new(x_offset, y_offset);
+
+        *enemy_vel = Velocity(latest_vel);
     }
 }
