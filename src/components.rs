@@ -29,6 +29,12 @@ impl Default for Moveable {
 pub struct Player;
 
 #[derive(Component)]
+pub struct FromPlayer;
+
+#[derive(Component)]
+pub struct FromEnemy;
+
+#[derive(Component)]
 pub struct Enemy;
 
 #[derive(Component)]
