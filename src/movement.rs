@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::{Despawnable, Moveable, Velocity};
+use crate::components::{Moveable, Velocity};
 use crate::constants::{BASE_SPEED, TIME_STEP};
 use crate::resources::WindowSize;
 use crate::utils::normalize_vec2;
@@ -12,7 +12,8 @@ pub struct MovementPlugin;
 
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(movement_system).add_system(despawn_system);
+        app.add_system(movement_system)
+            .add_system(despawn_out_of_bounds_system);
     }
 }
 
@@ -41,10 +42,10 @@ fn movement_system(
     }
 }
 
-fn despawn_system(
+fn despawn_out_of_bounds_system(
     mut cmds: Commands,
     win_size: Res<WindowSize>,
-    mut query: Query<(Entity, &Transform), With<Despawnable>>,
+    mut query: Query<(Entity, &Transform), With<Moveable>>,
 ) {
     for (entity, tf) in query.iter() {
         if tf.translation.x < ((-win_size.w / 2.) - DESPAWN_MARGIN)

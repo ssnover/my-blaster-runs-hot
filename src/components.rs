@@ -53,6 +53,3 @@ impl Default for RangedWeapon {
         }
     }
 }
-
-#[derive(Component)]
-pub struct Despawnable;

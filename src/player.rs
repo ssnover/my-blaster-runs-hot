@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::{Despawnable, Moveable, NormalBlasterFire, Player, RangedWeapon, Velocity};
+use crate::components::{Moveable, NormalBlasterFire, Player, RangedWeapon, Velocity};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
 use crate::resources::{Controller, GameTextures, WindowSize};
 use crate::utils::CooldownTimer;
@@ -126,7 +126,6 @@ fn player_fire_blaster_system(
             ..Default::default()
         })
         .insert(NormalBlasterFire)
-        .insert(Despawnable)
         .insert(Velocity::from(weapon_data.aim_direction))
         .insert(Moveable {
             solid: false,
