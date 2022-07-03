@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use bevy::math::Vec2;
+
 pub struct CooldownTimer {
     pub duration: Duration,
     pub elapsed: Option<Duration>,
@@ -28,5 +30,15 @@ impl CooldownTimer {
                 self.elapsed = None;
             }
         }
+    }
+}
+
+pub fn normalize_vec2(vec: Vec2) -> Vec2 {
+    if vec.x.abs() > std::f32::EPSILON || vec.y.abs() > std::f32::EPSILON {
+        let magnitude = (vec.x.powf(2.) + vec.y.powf(2.)).sqrt();
+        let scalar = 1. / magnitude;
+        Vec2::new(vec.x * scalar, vec.y * scalar)
+    } else {
+        Vec2::new(0., 0.)
     }
 }
