@@ -22,7 +22,7 @@ pub fn create_blaster_shot(
         ..Default::default()
     });
     entity_cmds
-        .insert(Size(Vec2::new(50., 50.)))
+        .insert(Size(Vec2::new(20., 20.)))
         .insert(NormalBlasterFire)
         .insert(Velocity::from(direction))
         .insert(Moveable {
