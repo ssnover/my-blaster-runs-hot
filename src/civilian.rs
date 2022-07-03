@@ -1,15 +1,17 @@
 use bevy::prelude::*;
+use bevy::sprite::collide_aabb::collide;
 use rand::Rng;
 
-use crate::components::{Civilian, Moveable, Player, Velocity};
-use crate::resources::WindowSize;
+use crate::components::{Civilian, Moveable, Player, Size, Velocity};
+use crate::resources::{PlayerScore, WindowSize};
 
 pub struct CivilianPlugin;
 
 impl Plugin for CivilianPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::PostStartup, spawn_civilian_system)
-            .add_system(civilian_ai_system);
+            .add_system(civilian_ai_system)
+            .add_system(civilian_despawn_system);
     }
 }
 
@@ -39,7 +41,8 @@ fn spawn_civilian_system(mut cmds: Commands, win_size: Res<WindowSize>) {
         .insert(Moveable {
             solid: true,
             speed_multiplier: 0.25,
-        });
+        })
+        .insert(Size(Vec2::new(20., 20.)));
     }
 }
 
@@ -55,5 +58,29 @@ fn civilian_ai_system(
             player_tf.translation.y - civ_tf.translation.y,
         );
         *civ_velocity = Velocity(position_diff);
+    }
+}
+
+fn civilian_despawn_system(
+    mut cmds: Commands,
+    civilian_query: Query<(Entity, &Transform, &Size), With<Civilian>>,
+    player_query: Query<(&Transform, &Size), With<Player>>,
+    mut score: ResMut<PlayerScore>,
+) {
+    let (player_tf, player_size) = player_query.get_single().unwrap();
+
+    for (entity, tf, civilian_size) in civilian_query.iter() {
+        let collision = collide(
+            player_tf.translation,
+            player_size.0,
+            tf.translation,
+            civilian_size.0,
+        );
+        if collision.is_some() {
+            // Rescued this civilian!
+            score.0 += 100;
+            cmds.entity(entity).despawn_recursive();
+            println!("Current Score: {}", score.0);
+        }
     }
 }
