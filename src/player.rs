@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::components::{Despawnable, Moveable, NormalBlasterFire, Player, RangedWeapon, Velocity};
+use crate::components::{
+    Despawnable, Moveable, NormalBlasterFire, Player, RangedWeapon, Size, Velocity,
+};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP};
 use crate::resources::{Controller, GameTextures, WindowSize};
 use crate::utils::CooldownTimer;
@@ -35,6 +37,7 @@ fn player_spawn_system(
         speed_multiplier: 1.,
         ..Default::default()
     })
+    .insert(Size(Vec2::new(50., 50.)))
     .insert(RangedWeapon {
         aim_direction: Vec2::new(1., 0.),
         fire_rate_timer: CooldownTimer::from_seconds(0.5),
