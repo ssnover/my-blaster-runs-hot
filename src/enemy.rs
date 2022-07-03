@@ -44,7 +44,7 @@ fn enemy_spawn_system(
         .insert(Moveable {
             //Slower than player
             solid: true,
-            speed_multiplier: 1.,
+            speed_multiplier: 0.5,
             ..Default::default()
         });
     }
@@ -72,10 +72,10 @@ fn enemy_ai_system(
         for (enemy, tf) in &enemy_position {
             if entity != *enemy {
                 if (tf.x - enemy_tf.translation.x).abs() < ENEMY_REPULSION_RADIUS{
-                    x_offset += enemy_tf.translation.x/enemy_tf.translation.x.abs();
+                    x_offset += (enemy_tf.translation.x/enemy_tf.translation.x.abs())/(tf.x - enemy_tf.translation.x) ;
                 }
                 if (tf.y - enemy_tf.translation.y).abs() < ENEMY_REPULSION_RADIUS {
-                    y_offset += enemy_tf.translation.x/enemy_tf.translation.x.abs();
+                    y_offset += enemy_tf.translation.y/enemy_tf.translation.y.abs()/(tf.y - enemy_tf.translation.y);
                 }
             }
         }
