@@ -1,11 +1,13 @@
 use bevy::prelude::*;
+use bevy::sprite::collide_aabb::collide;
 use bevy::utils::HashMap;
 use rand::Rng;
 
-use crate::components::{Enemy, Moveable, Player, Velocity};
+use crate::components::{Enemy, Moveable, Player, Velocity, FromPlayer, Size};
 use crate::constants::{BASE_SPEED, SPRITE_SCALE, TIME_STEP, ENEMY_REPULSION_FORCE, PLAYER_ATTRACTION_FORCE, ENEMY_REPULSION_RADIUS};
 use crate::resources::{GameTextures, WindowSize};
 use crate::utils::normalize_vec2;
+use crate::PlayerScore;
 
 pub struct EnemyPlugin;
 
@@ -40,6 +42,7 @@ fn enemy_spawn_system(
             ..Default::default()
         })
         .insert(Enemy)
+        .insert(Size(Vec2::new(50.,50.)))
         .insert(Velocity::from(Vec2::new(0., 0.)))
         .insert(Moveable {
             //Slower than player
@@ -53,9 +56,9 @@ fn enemy_spawn_system(
 fn enemy_ai_system(
     mut cmds: Commands,
     mut enemy_query: Query<(Entity, &mut Velocity, &Transform), With<Enemy>>,
-    query_player: Query<(&Transform), With<Player>>,
+    player_query: Query<(&Transform), With<Player>>,
 ) {
-    let player_tf = query_player.get_single().unwrap();
+    let player_tf = player_query.get_single().unwrap();
     let mut x_offset = 0.0;
     let mut y_offset = 0.0;
     let mut entity_counter = 0.;
@@ -90,3 +93,28 @@ fn enemy_ai_system(
         *enemy_vel = Velocity(total_vel);
     }
 }
+
+fn enemy_despawn_system(
+    mut cmds: Commands,
+    enemy_query: Query<(Entity, &Transform, &Size), With<Enemy>>,
+    blaster_query: Query<(&Transform, &Size), With<FromPlayer>>,
+    mut score: ResMut<PlayerScore>,
+) {
+
+    for (blaster_tf, blaster_size) in blaster_query.iter() {
+        for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
+            let collision = collide(
+                enemy_tf.translation, 
+                enemy_size.0, 
+                blaster_tf.translation, 
+                blaster_size.0
+            );
+            if collision.is_some() {
+                score.0 += 3;
+                cmds.entity(enemy_entity).despawn_recursive();
+                println!("Current Score: {}", score.0);
+            }
+        }    
+    }
+}
+

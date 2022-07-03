@@ -34,7 +34,7 @@ fn main() {
         .add_plugin(civilian::CivilianPlugin)
         .add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)
-        .add_plugin((enemy::EnemyPlugin))
+        .add_plugin(enemy::EnemyPlugin)
         .add_plugin(movement::MovementPlugin)
         .add_startup_system(setup_system)
         .run();
