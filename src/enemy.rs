@@ -37,6 +37,7 @@ fn enemy_spawn_system(
     .insert(Velocity::from(Vec2::new(0.,0.)))
     .insert(Moveable {
         //Slower than player
+        solid: true,
         speed_multiplier: 1.,
         ..Default::default()
     });
@@ -55,6 +56,7 @@ fn enemy_ai_system(
             player_tf.translation.x - enemy_tf.translation.x,
             player_tf.translation.y - enemy_tf.translation.y
         );
+        println!("new_vel {}", new_vel);
         *self_vel = Velocity(new_vel);
     }
 }
