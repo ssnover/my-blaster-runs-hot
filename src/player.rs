@@ -69,10 +69,7 @@ fn player_control_system(
         let axis_ry = GamepadAxis(controller.0, GamepadAxisType::RightStickY);
         if let (Some(x), Some(y)) = (axes.get(axis_rx), axes.get(axis_ry)) {
             if x.abs() > 0.2 || y.abs() > 0.2 {
-                // Normalize the vector so that the controller input doesn't control the speed
-                let magnitude = (x.powf(2.) + y.powf(2.)).sqrt();
-                let scalar = 1. / magnitude;
-                weapon_data.aim_direction = Vec2::new(x * scalar, y * scalar);
+                weapon_data.aim_direction = Vec2::new(x, y);
             }
         }
     } else {
