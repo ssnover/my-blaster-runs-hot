@@ -3,7 +3,9 @@ use bevy::sprite::collide_aabb::collide;
 use bevy::utils::HashMap;
 use rand::Rng;
 
-use crate::components::{Enemy, FromPlayer, Moveable, NormalBlasterFire, Player, Size, Velocity, Health, Damage};
+use crate::components::{
+    Damage, Enemy, FromPlayer, Health, Moveable, NormalBlasterFire, Player, Size, Velocity,
+};
 use crate::constants::{
     BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, PLAYER_ATTRACTION_FORCE,
     SPRITE_SCALE, TIME_STEP,
@@ -106,7 +108,10 @@ fn enemy_ai_system(
 fn enemy_despawn_system(
     mut cmds: Commands,
     mut enemy_query: Query<(Entity, &Transform, &Size, &mut Health), With<Enemy>>,
-    blaster_query: Query<(Entity, &Transform, &Size, &Damage), (With<FromPlayer>, With<NormalBlasterFire>)>,
+    blaster_query: Query<
+        (Entity, &Transform, &Size, &Damage),
+        (With<FromPlayer>, With<NormalBlasterFire>),
+    >,
     mut score: ResMut<PlayerScore>,
 ) {
     for (blaster_entity, blaster_tf, blaster_size, blaster_damage) in blaster_query.iter() {
@@ -119,10 +124,10 @@ fn enemy_despawn_system(
             );
             if collision.is_some() {
                 enemy_health.0 = enemy_health.0.saturating_sub(blaster_damage.0);
-                    if(enemy_health.0 == 0) {
-                        score.0 += 3;
-                        cmds.entity(enemy_entity).despawn_recursive();
-                    }
+                if (enemy_health.0 == 0) {
+                    score.0 += 3;
+                    cmds.entity(enemy_entity).despawn_recursive();
+                }
                 cmds.entity(blaster_entity).despawn_recursive();
             }
         }
