@@ -45,14 +45,20 @@ fn player_spawn_system(
 }
 
 fn player_control_system(
-    mut query: Query<(&mut Velocity, &mut RangedWeapon), With<Player>>,
+    mut query: Query<(&mut Velocity, &mut RangedWeapon, &Transform), With<Player>>,
     controller: Option<Res<Controller>>,
     keys: Res<Input<KeyCode>>,
     axes: Res<Axis<GamepadAxis>>,
     buttons: Res<Input<GamepadButton>>,
-    mouse_buttons: Res<Input<MouseButton>>
+    mouse_buttons: Res<Input<MouseButton>>,
+    mut cursor_evr: EventReader<CursorMoved>,
+    win_size: Res<WindowSize>,
 ) {
-    let (mut velocity, mut weapon_data) = query.get_single_mut().unwrap();
+    let (mut velocity, mut weapon_data, player_tf) = query.get_single_mut().unwrap();
+
+    for ev in cursor_evr.iter() {
+        weapon_data.aim_direction = Vec2::new(ev.position.x - win_size.w/2.0, ev.position.y - win_size.h/2.0);
+    }
 
     if let Some(controller) = controller {
         let axis_lx = GamepadAxis(controller.0, GamepadAxisType::LeftStickX);
