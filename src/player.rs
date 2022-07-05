@@ -50,8 +50,10 @@ fn player_control_system(
     keys: Res<Input<KeyCode>>,
     axes: Res<Axis<GamepadAxis>>,
     buttons: Res<Input<GamepadButton>>,
+    mouse_buttons: Res<Input<MouseButton>>
 ) {
     let (mut velocity, mut weapon_data) = query.get_single_mut().unwrap();
+
     if let Some(controller) = controller {
         let axis_lx = GamepadAxis(controller.0, GamepadAxisType::LeftStickX);
         let axis_ly = GamepadAxis(controller.0, GamepadAxisType::LeftStickY);
@@ -86,7 +88,9 @@ fn player_control_system(
             velocity.x = 0.;
         }
 
-        weapon_data.firing = keys.pressed(KeyCode::RShift);
+        //weapon_data.firing = keys.pressed(KeyCode::RShift);
+        weapon_data.firing = mouse_buttons.pressed(MouseButton::Left);
+
         if keys.pressed(KeyCode::Up) {
             weapon_data.aim_direction.y = 1.;
         }
