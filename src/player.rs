@@ -53,11 +53,20 @@ fn player_control_system(
     mouse_buttons: Res<Input<MouseButton>>,
     mut cursor_evr: EventReader<CursorMoved>,
     win_size: Res<WindowSize>,
+    windows: Res<Windows>,
 ) {
     let (mut velocity, mut weapon_data, player_tf) = query.get_single_mut().unwrap();
 
-    for ev in cursor_evr.iter() {
-        weapon_data.aim_direction = Vec2::new(ev.position.x - win_size.w/2.0, ev.position.y - win_size.h/2.0);
+    // for ev in cursor_evr.iter() {
+    //     weapon_data.aim_direction = Vec2::new(ev.position.x - win_size.w/2.0  - player_tf.translation.x, ev.position.y - win_size.h/2.0 - player_tf.translation.y);
+    // }
+    let window = windows.get_primary().unwrap();
+
+    if let Some(position) = window.cursor_position() {
+        weapon_data.aim_direction = Vec2::new(
+            position.x - win_size.w / 2.0 - player_tf.translation.x,
+            position.y - win_size.h / 2.0 - player_tf.translation.y,
+        );
     }
 
     if let Some(controller) = controller {
