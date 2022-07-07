@@ -108,6 +108,7 @@ fn enemy_despawn_system(
     blaster_query: Query<(Entity, &Transform, &Size), (With<FromPlayer>, With<NormalBlasterFire>)>,
     mut score: ResMut<PlayerScore>,
 ) {
+    //I want to breakout this out into a plugin I think so it is easily usable for the player? Not sure but I don't want to leave this here
     for (blaster_entity, blaster_tf, blaster_size) in blaster_query.iter() {
         for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
             let collision = collide(
