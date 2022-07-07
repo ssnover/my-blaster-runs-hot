@@ -20,8 +20,7 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::PostStartup, enemy_spawn_system)
             .add_system(enemy_ai_system)
-            .add_system(enemy_despawn_system)
-            .add_system(animate_sprite);
+            .add_system(enemy_despawn_system);
     }
 }
 
@@ -141,24 +140,6 @@ fn enemy_despawn_system(
                 }
                 cmds.entity(blaster_entity).despawn_recursive();
             }
-        }
-    }
-}
-
-fn animate_sprite( 
-    time: Res<Time>,
-    texture_atlases: Res<Assets<TextureAtlas>>,
-    mut query: Query<(
-            &mut AnimationTimer,
-            &mut TextureAtlasSprite,
-            &Handle<TextureAtlas>,
-    )>,
-) {
-    for (mut timer, mut sprite, texture_atlas_handle) in query.iter_mut() {
-        timer.tick(time.delta());
-        if timer.just_finished() {
-            let texture_atlas = texture_atlases.get(texture_atlas_handle).unwrap();
-            sprite.index = (sprite.index + 1) % texture_atlas.textures.len();
         }
     }
 }

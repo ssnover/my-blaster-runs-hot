@@ -21,6 +21,7 @@ use constants::*;
 use resources::{BlasterHeat, GameFont, GameTextures, PlayerScore, WindowSize};
 use utils::CooldownTimer;
 mod enemy;
+mod graphics;
 
 fn main() {
     App::new()
@@ -37,6 +38,7 @@ fn main() {
         .add_plugin(player::PlayerPlugin)
         .add_plugin(enemy::EnemyPlugin)
         .add_plugin(movement::MovementPlugin)
+        .add_plugin(graphics::AnimationPlugin)
         .add_plugin(ui::UiPlugin)
         .add_startup_system(setup_system)
         .run();
