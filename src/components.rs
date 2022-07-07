@@ -71,3 +71,10 @@ pub struct Health(pub u32);
 
 #[derive(Component)]
 pub struct Damage(pub u32);
+
+#[derive(Component, Deref, DerefMut)]
+pub struct AnimationTimer(pub Timer);
+
+//Thinking this struct would be from 0 to 1 radians/revolutions so direction should be easy? 
+#[derive(Component)]
+pub struct EntityDirection(f32);

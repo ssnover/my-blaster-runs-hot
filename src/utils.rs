@@ -42,3 +42,7 @@ pub fn normalize_vec2(vec: Vec2) -> Vec2 {
         Vec2::new(0., 0.)
     }
 }
+
+pub fn direction_vec2(vec: Vec2) -> f32 {
+    0.
+}

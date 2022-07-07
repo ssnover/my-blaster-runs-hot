@@ -1,14 +1,14 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, transform};
 use bevy::sprite::collide_aabb::collide;
 use bevy::utils::HashMap;
 use rand::Rng;
 
 use crate::components::{
-    Damage, Enemy, FromPlayer, Health, Moveable, NormalBlasterFire, Player, Size, Velocity,
+    Damage, Enemy, FromPlayer, Health, Moveable, NormalBlasterFire, Player, Size, Velocity, AnimationTimer,
 };
 use crate::constants::{
     BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, PLAYER_ATTRACTION_FORCE,
-    SPRITE_SCALE, TIME_STEP,
+    SPRITE_SCALE, TIME_STEP, ENEMY_SPRITE_SCALE,
 };
 use crate::resources::{GameTextures, WindowSize};
 use crate::utils::normalize_vec2;
@@ -20,7 +20,8 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::PostStartup, enemy_spawn_system)
             .add_system(enemy_ai_system)
-            .add_system(enemy_despawn_system);
+            .add_system(enemy_despawn_system)
+            .add_system(animate_sprite);
     }
 }
 
@@ -28,15 +29,23 @@ fn enemy_spawn_system(
     mut cmds: Commands,
     game_textures: Res<GameTextures>,
     win_size: Res<WindowSize>,
+    
+    //Ahh I think this is different than what we are doing
+    assest_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
+
     let mut rng = rand::thread_rng();
 
     // Add the enemy
+    let texture_handle = assest_server.load("darians-assests/Ball and Chain Bot/run.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0,39.0), 1, 8);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
     for i in 0..3 {
-        cmds.spawn_bundle(SpriteBundle {
-            texture: game_textures.enemy.clone(),
+        cmds.spawn_bundle(SpriteSheetBundle {
+            texture_atlas: texture_atlas_handle.clone(),
             transform: Transform {
-                scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
+                scale: Vec3::new(ENEMY_SPRITE_SCALE, ENEMY_SPRITE_SCALE, 1.),
                 //translation: Vec3::new( 200., 200., 0.),
                 translation: Vec3::new(
                     rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
@@ -51,6 +60,7 @@ fn enemy_spawn_system(
         .insert(Health(5))
         .insert(Size(Vec2::new(50., 50.)))
         .insert(Velocity::from(Vec2::new(0., 0.)))
+        .insert(AnimationTimer( Timer::from_seconds(0.1, true) ) )
         .insert(Moveable {
             //Slower than player
             solid: true,
@@ -62,7 +72,7 @@ fn enemy_spawn_system(
 
 fn enemy_ai_system(
     mut cmds: Commands,
-    mut enemy_query: Query<(Entity, &mut Velocity, &Transform), With<Enemy>>,
+    mut enemy_query: Query<(Entity, &mut Velocity, & Transform), With<Enemy>>,
     player_query: Query<(&Transform), With<Player>>,
 ) {
     let player_tf = player_query.get_single().unwrap();
@@ -76,7 +86,7 @@ fn enemy_ai_system(
         enemy_position.insert(entity, enemy_tf.translation);
     }
 
-    for (entity, mut enemy_vel, enemy_tf) in enemy_query.iter_mut() {
+    for (entity, mut enemy_vel, mut enemy_tf) in enemy_query.iter_mut() {
         //These random constants need to be changed and we need some way to know that the enemy cannot be the position of other enemies
         //But it all diverges to player eventually
         for (enemy, tf) in &enemy_position {
@@ -101,6 +111,7 @@ fn enemy_ai_system(
             - ENEMY_REPULSION_FORCE * Vec2::new(x_offset, y_offset);
         x_offset = 0.0;
         y_offset = 0.0;
+
         *enemy_vel = Velocity(total_vel);
     }
 }
@@ -133,3 +144,22 @@ fn enemy_despawn_system(
         }
     }
 }
+
+fn animate_sprite( 
+    time: Res<Time>,
+    texture_atlases: Res<Assets<TextureAtlas>>,
+    mut query: Query<(
+            &mut AnimationTimer,
+            &mut TextureAtlasSprite,
+            &Handle<TextureAtlas>,
+    )>,
+) {
+    for (mut timer, mut sprite, texture_atlas_handle) in query.iter_mut() {
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            let texture_atlas = texture_atlases.get(texture_atlas_handle).unwrap();
+            sprite.index = (sprite.index + 1) % texture_atlas.textures.len();
+        }
+    }
+}
+
