@@ -36,10 +36,11 @@ fn enemy_spawn_system(
 
     let mut rng = rand::thread_rng();
 
-    // Add the enemy
+    // Add the enemy sprites I think I want to break this out into a component? With a bunch of parts that we can call in different systems even at startup
     let texture_handle = assest_server.load("darians-assests/Ball and Chain Bot/run.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0,39.0), 1, 8);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
     for i in 0..3 {
         cmds.spawn_bundle(SpriteSheetBundle {
             texture_atlas: texture_atlas_handle.clone(),
