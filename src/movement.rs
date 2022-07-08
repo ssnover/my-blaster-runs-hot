@@ -20,6 +20,7 @@ impl Plugin for MovementPlugin {
 fn movement_system(
     win_size: Res<WindowSize>,
     mut query: Query<(&Velocity, &Moveable, &mut Transform)>,
+    mut sprite_query: Query<&mut TextureAtlasSprite>,
 ) {
     for (velocity, moveable, mut tf) in query.iter_mut() {
         let velocity = normalize_vec2(velocity.0);

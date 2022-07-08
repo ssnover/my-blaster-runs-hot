@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::{AnimationTimer};
+use crate::components::{AnimationTimer, Velocity};
 
 pub struct AnimationPlugin;
 
@@ -17,13 +17,22 @@ fn animation_system (
         &mut AnimationTimer,
         &mut TextureAtlasSprite,
         &Handle<TextureAtlas>,
+        &Velocity,
     )>
 ) {
-    for (mut timer, mut sprite, texture_atlas_handle) in query.iter_mut() {
+    for (mut timer, mut sprite, texture_atlas_handle, velocity) in query.iter_mut() {
         timer.tick(time.delta());
         if timer.just_finished() {
             let texture_atlas = texture_atlases.get(texture_atlas_handle).unwrap();
             sprite.index = (sprite.index + 1) % texture_atlas.textures.len();
+        }
+
+        //This may be a naive approach but it might jsut work for what we need, and it would be tedious to create 2 copies of every sprite
+        if velocity.x < 0.0 {
+            sprite.flip_x = true;
+        }
+        else {
+            sprite.flip_x = false;
         }
     }
 }
