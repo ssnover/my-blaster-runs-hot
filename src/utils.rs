@@ -43,6 +43,4 @@ pub fn normalize_vec2(vec: Vec2) -> Vec2 {
     }
 }
 
-pub fn direction_vec2(vec: Vec2) -> f32 {
-    0.
-}
+//Vec2.angle_between(Vec2::new(1.0,0.0));
