@@ -11,6 +11,7 @@ mod blaster;
 mod civilian;
 mod components;
 mod constants;
+mod debug;
 mod gamepad;
 mod movement;
 mod player;
