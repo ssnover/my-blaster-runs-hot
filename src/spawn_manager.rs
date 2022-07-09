@@ -35,11 +35,11 @@ fn spawn_manager_system(
     if current_max_spawns > number_of_spawns {
         let mut rng = rand::thread_rng();
         let diff = current_max_spawns - number_of_spawns;
-        let spawn_position = Vec2::new(
-            rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
-            rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
-        );
         for _ in 0..diff {
+            let spawn_position = Vec2::new(
+                rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
+                rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
+            );
             match spawn_queue.pop_front() {
                 Some(SpawnType::Civilian) => spawn_civilian(&mut cmds, spawn_position),
                 Some(SpawnType::Crab) => {
