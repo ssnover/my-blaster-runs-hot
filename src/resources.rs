@@ -1,6 +1,15 @@
 use bevy::prelude::*;
+use std::collections::VecDeque;
 
 use crate::utils::CooldownTimer;
+
+pub enum SpawnType {
+    Civilian,
+    Crab,
+    Bot,
+    Tank,
+    Exploder,
+}
 
 pub struct WindowSize {
     pub w: f32,
@@ -24,3 +33,6 @@ pub struct BlasterHeat {
     pub value: f32,
     pub overheat_cooldown_timer: CooldownTimer,
 }
+
+#[derive(Deref, DerefMut)]
+pub struct SpawnQueue(pub VecDeque<SpawnType>);
