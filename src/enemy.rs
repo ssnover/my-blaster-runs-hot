@@ -29,7 +29,6 @@ pub fn spawn_crab(cmds: &mut Commands, position: Vec2, texture: Handle<Image>) {
         texture,
         transform: Transform {
             scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
-            //translation: Vec3::new( 200., 200., 0.),
             translation: Vec3::new(position.x, position.y, 0.),
             ..Default::default()
         },
