@@ -9,40 +9,46 @@ pub struct CivilianPlugin;
 
 impl Plugin for CivilianPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PostStartup, spawn_civilian_system)
+        app //.add_startup_system_to_stage(StartupStage::PostStartup, spawn_civilian_system)
             .add_system(civilian_ai_system)
             .add_system(civilian_despawn_system);
     }
+}
+
+pub fn spawn_civilian(cmds: &mut Commands, position: Vec2) {
+    cmds.spawn_bundle(SpriteBundle {
+        sprite: Sprite {
+            color: Color::rgb_u8(40, 240, 40),
+            custom_size: Some(Vec2::new(20., 20.)),
+            ..Default::default()
+        },
+        transform: Transform {
+            translation: Vec3::new(position.x, position.y, 1.0),
+            ..Default::default()
+        },
+        ..Default::default()
+    })
+    .insert(Civilian)
+    .insert(Velocity(Vec2::new(0., 0.)))
+    .insert(Moveable {
+        solid: true,
+        speed_multiplier: 0.25,
+    })
+    .insert(Size(Vec2::new(20., 20.)));
 }
 
 fn spawn_civilian_system(mut cmds: Commands, win_size: Res<WindowSize>) {
     let mut rng = rand::thread_rng();
     let num_civilians = 5;
 
-    for idx in 0..num_civilians {
-        cmds.spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgb_u8(40, 240, 40),
-                custom_size: Some(Vec2::new(20., 20.)),
-                ..Default::default()
-            },
-            transform: Transform {
-                translation: Vec3::new(
-                    rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
-                    rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
-                    1.9,
-                ),
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(Civilian)
-        .insert(Velocity(Vec2::new(0., 0.)))
-        .insert(Moveable {
-            solid: true,
-            speed_multiplier: 0.25,
-        })
-        .insert(Size(Vec2::new(20., 20.)));
+    for _ in 0..num_civilians {
+        spawn_civilian(
+            &mut cmds,
+            Vec2::new(
+                rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
+                rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
+            ),
+        );
     }
 }
 
