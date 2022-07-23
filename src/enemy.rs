@@ -3,7 +3,9 @@ use bevy::sprite::collide_aabb::collide;
 use bevy::utils::HashMap;
 use rand::Rng;
 
-use crate::components::{Enemy, FromPlayer, Moveable, NormalBlasterFire, Player, Size, Velocity};
+use crate::components::{
+    AreaOfEffect, Enemy, FromPlayer, Moveable, Player, Projectile, Size, Velocity,
+};
 use crate::constants::{
     BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, PLAYER_ATTRACTION_FORCE,
     SPRITE_SCALE, TIME_STEP,
@@ -17,8 +19,7 @@ pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::PostStartup, enemy_spawn_system)
-            .add_system(enemy_ai_system)
-            .add_system(enemy_despawn_system);
+            .add_system(enemy_ai_system);
     }
 }
 
@@ -102,26 +103,27 @@ fn enemy_ai_system(
     }
 }
 
-fn enemy_despawn_system(
-    mut cmds: Commands,
-    enemy_query: Query<(Entity, &Transform, &Size), With<Enemy>>,
-    blaster_query: Query<(Entity, &Transform, &Size), (With<FromPlayer>, With<NormalBlasterFire>)>,
-    mut score: ResMut<PlayerScore>,
-) {
-    //I want to breakout this out into a plugin I think so it is easily usable for the player? Not sure but I don't want to leave this here
-    for (blaster_entity, blaster_tf, blaster_size) in blaster_query.iter() {
-        for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
-            let collision = collide(
-                enemy_tf.translation,
-                enemy_size.0,
-                blaster_tf.translation,
-                blaster_size.0,
-            );
-            if collision.is_some() {
-                score.0 += 3;
-                cmds.entity(enemy_entity).despawn_recursive();
-                cmds.entity(blaster_entity).despawn_recursive();
-            }
-        }
-    }
-}
+// fn enemy_despawn_system(
+//     mut cmds: Commands,
+//     enemy_query: Query<(Entity, &Transform, &Size), With<Enemy>>,
+//     blaster_query: Query<(Entity, &Transform, &Size), (With<FromPlayer>, With<Projectile>)>,
+//     mut score: ResMut<PlayerScore>,
+// ) {
+//     //I want to breakout this out into a plugin I think so it is easily usable for the player? Not sure but I don't want to leave this here
+//     for (blaster_entity, blaster_tf, blaster_size) in blaster_query.iter() {
+//         for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
+//             let collision = collide(
+//                 enemy_tf.translation,
+//                 enemy_size.0,
+//                 blaster_tf.translation,
+//                 blaster_size.0,
+//             );
+//             if collision.is_some() {
+//                 score.0 += 3;
+//                 cmds.entity(enemy_entity).despawn_recursive();
+//                 cmds.entity(blaster_entity).despawn_recursive();
+//                 break;
+//             }
+//         }
+//     }
+// }

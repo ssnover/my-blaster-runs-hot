@@ -17,10 +17,13 @@ mod player;
 mod resources;
 mod ui;
 mod utils;
+mod projectile_collision;
+mod enemy;
+
+use projectile_collision::CollisionPlugin;
 use constants::*;
 use resources::{BlasterHeat, GameFont, GameTextures, PlayerScore, WindowSize};
 use utils::CooldownTimer;
-mod enemy;
 
 fn main() {
     App::new()
@@ -39,6 +42,7 @@ fn main() {
         .add_plugin(movement::MovementPlugin)
         .add_plugin(ui::UiPlugin)
         .add_startup_system(setup_system)
+        .add_plugin(CollisionPlugin)
         .run();
 }
 
