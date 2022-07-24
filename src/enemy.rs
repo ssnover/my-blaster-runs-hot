@@ -4,22 +4,23 @@ use bevy::utils::HashMap;
 use rand::Rng;
 
 use crate::components::{
-    AreaOfEffect, Enemy, FromPlayer, Moveable, Player, Projectile, Size, Velocity,
+    AreaOfEffect, Enemy, FromPlayer, Moveable, Player, Projectile, Size, Velocity, RangedWeapon,
 };
 use crate::constants::{
     BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, PLAYER_ATTRACTION_FORCE,
     SPRITE_SCALE, TIME_STEP,
 };
 use crate::resources::{GameTextures, WindowSize};
-use crate::utils::normalize_vec2;
-use crate::PlayerScore;
+use crate::utils::{normalize_vec2, CooldownTimer};
+use crate::{PlayerScore, blaster};
 
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system_to_stage(StartupStage::PostStartup, enemy_spawn_system)
-            .add_system(enemy_ai_system);
+            .add_system(enemy_ai_system)
+            .add_system(enemy_blaster_system);
     }
 }
 
@@ -49,6 +50,11 @@ fn enemy_spawn_system(
         .insert(Enemy)
         .insert(Size(Vec2::new(50., 50.)))
         .insert(Velocity::from(Vec2::new(0., 0.)))
+        .insert(RangedWeapon {
+            aim_direction: Vec2::new(1., 0.),
+            fire_rate_timer: CooldownTimer::from_seconds(0.5),
+            firing: true,
+        })
         .insert(Moveable {
             //Slower than player
             solid: true,
@@ -100,30 +106,35 @@ fn enemy_ai_system(
         x_offset = 0.0;
         y_offset = 0.0;
         *enemy_vel = Velocity(total_vel);
+
     }
 }
 
-// fn enemy_despawn_system(
-//     mut cmds: Commands,
-//     enemy_query: Query<(Entity, &Transform, &Size), With<Enemy>>,
-//     blaster_query: Query<(Entity, &Transform, &Size), (With<FromPlayer>, With<Projectile>)>,
-//     mut score: ResMut<PlayerScore>,
-// ) {
-//     //I want to breakout this out into a plugin I think so it is easily usable for the player? Not sure but I don't want to leave this here
-//     for (blaster_entity, blaster_tf, blaster_size) in blaster_query.iter() {
-//         for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
-//             let collision = collide(
-//                 enemy_tf.translation,
-//                 enemy_size.0,
-//                 blaster_tf.translation,
-//                 blaster_size.0,
-//             );
-//             if collision.is_some() {
-//                 score.0 += 3;
-//                 cmds.entity(enemy_entity).despawn_recursive();
-//                 cmds.entity(blaster_entity).despawn_recursive();
-//                 break;
-//             }
-//         }
-//     }
-// }
+fn enemy_blaster_system(
+    mut cmds: Commands,
+    mut enemy_query: Query<(Entity, &Transform, &mut RangedWeapon), With<Enemy>>,
+    player_query: Query<(&Transform), With<Player>>,
+    time: Res<Time>,
+) {
+
+    let player_tf = player_query.get_single().unwrap();
+
+    for (entity, enemy_tf, mut enemy_weapon) in enemy_query.iter_mut() {
+        enemy_weapon.fire_rate_timer.tick(time.delta());
+
+        if enemy_weapon.firing && enemy_weapon.fire_rate_timer.ready() {
+            enemy_weapon.aim_direction = Vec2::new(
+                player_tf.translation.x - enemy_tf.translation.x,
+                player_tf.translation.y - enemy_tf.translation.y,
+            );
+
+            blaster::create_blaster_shot(
+                &mut cmds,
+                enemy_tf.translation,
+                enemy_weapon.aim_direction,
+                Color::rgb_u8(0, 0, 240),
+                false,
+            );
+        }
+    }   
+}

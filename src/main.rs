@@ -11,17 +11,17 @@ mod blaster;
 mod civilian;
 mod components;
 mod constants;
+mod enemy;
 mod gamepad;
 mod movement;
 mod player;
+mod projectile_collision;
 mod resources;
 mod ui;
 mod utils;
-mod projectile_collision;
-mod enemy;
 
-use projectile_collision::CollisionPlugin;
 use constants::*;
+use projectile_collision::CollisionPlugin;
 use resources::{BlasterHeat, GameFont, GameTextures, PlayerScore, WindowSize};
 use utils::CooldownTimer;
 

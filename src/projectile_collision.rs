@@ -25,15 +25,15 @@ pub fn projectile_collision_and_score_system(
                 projectile_tf.translation,
                 projectile_size.0,
             );
+        } else {
+            check_collision_with_player(
+                &mut commands,
+                &mut player_query,
+                projectile_entity,
+                projectile_tf.translation,
+                projectile_size.0,
+            );
         }
-        // } else {
-        //     check_collision_with_player(
-        //         &mut commands,
-        //         &mut player_query,
-        //         projectile,
-        //         &collider_entity,
-        //     );
-        // }
     }
 }
 
@@ -59,36 +59,24 @@ fn check_collision_with_enemy(
     }
 }
 
-// fn check_collision_with_player(
-//     mut commands: Commands,
-//     player_query: player_query: Query< (Entity, &Transform, &Size), With<Player> >,
-//     projectile,
-//     &collider_entity,
-// ) {
-
-// }
-
-// fn enemy_despawn_system(
-//     mut cmds: Commands,
-//     enemy_query: Query<(Entity, &Transform, &Size), With<Enemy>>,
-//     blaster_query: Query<(Entity, &Transform, &Size), (With<FromPlayer>, With<Projectile>)>,
-//     mut score: ResMut<PlayerScore>,
-// ) {
-//     //I want to breakout this out into a plugin I think so it is easily usable for the player? Not sure but I don't want to leave this here
-//     for (blaster_entity, blaster_tf, blaster_size) in blaster_query.iter() {
-//         for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
-//             let collision = collide(
-//                 enemy_tf.translation,
-//                 enemy_size.0,
-//                 blaster_tf.translation,
-//                 blaster_size.0,
-//             );
-//             if collision.is_some() {
-//                 score.0 += 3;
-//                 cmds.entity(enemy_entity).despawn_recursive();
-//                 cmds.entity(blaster_entity).despawn_recursive();
-//                 break;
-//             }
-//         }
-//     }
-// }
+fn check_collision_with_player(
+    cmds: &mut Commands,
+    player_query: &Query<(Entity, &Transform, &Size), With<Player>>,
+    project_entity: bevy::prelude::Entity,
+    projectile_tf: Vec3,
+    projectile_size: Vec2,
+) {
+    for (player_entity, player_tf, player_size) in player_query.iter() {
+        let collision = collide(
+            player_tf.translation,
+            player_size.0,
+            projectile_tf,
+            projectile_size,
+        );
+        if collision.is_some() {
+            cmds.entity(player_entity).despawn_recursive();
+            cmds.entity(project_entity).despawn_recursive();
+            break;
+        }
+    }
+}
