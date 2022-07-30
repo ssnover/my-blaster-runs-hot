@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use crate::components::{Civilian, Enemy};
 use crate::resources::{SpawnQueue, SpawnType};
+use crate::states::GameState;
 
 #[derive(Copy, Clone, Debug, Deserialize)]
 pub struct RoundSpawns {
@@ -73,8 +74,10 @@ pub struct RoundManagerPlugin;
 
 impl Plugin for RoundManagerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PostStartup, start_round_system)
-            .add_system(round_manager_system);
+        app.add_system_set(SystemSet::on_enter(GameState::MainGame)
+                .with_system(start_round_system))
+            .add_system_set(SystemSet::on_update(GameState::MainGame)
+                .with_system(round_manager_system));
     }
 }
 

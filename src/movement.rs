@@ -4,6 +4,7 @@ use crate::components::{Moveable, Velocity};
 use crate::constants::{BASE_SPEED, TIME_STEP};
 use crate::resources::WindowSize;
 use crate::utils::normalize_vec2;
+use crate::states::GameState;
 
 const DESPAWN_MARGIN: f32 = 200.;
 const MOVEMENT_BOUND_MARGIN: f32 = 50.;
@@ -12,8 +13,10 @@ pub struct MovementPlugin;
 
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(movement_system)
-            .add_system(despawn_out_of_bounds_system);
+
+    app.add_system_set(SystemSet::on_update(GameState::MainGame)
+        .with_system(movement_system)
+        .with_system(despawn_out_of_bounds_system));
     }
 }
 

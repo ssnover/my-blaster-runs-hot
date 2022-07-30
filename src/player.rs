@@ -6,14 +6,15 @@ use crate::constants::*;
 use crate::debug;
 use crate::resources::{BlasterHeat, Controller, GameTextures, WindowSize};
 use crate::utils::CooldownTimer;
-
+use crate::states::GameState;
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PostStartup, player_spawn_system)
-            .add_system(player_control_system)
-            .add_system(player_fire_blaster_system);
+        app.add_system_set(SystemSet::on_enter(GameState::MainGame).with_system(player_spawn_system))
+            .add_system_set(SystemSet::on_update(GameState::MainGame)
+                .with_system(player_control_system)
+                .with_system(player_fire_blaster_system));
     }
 }
 

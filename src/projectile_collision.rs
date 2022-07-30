@@ -2,11 +2,14 @@ use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 
 use crate::components::{Enemy, FromPlayer, Moveable, Player, Projectile, Size, Velocity};
+use crate::states::GameState;
 pub struct CollisionPlugin;
 
 impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(projectile_collision_and_score_system);
+
+        app.add_system_set(SystemSet::on_update(GameState::MainGame)
+            .with_system(projectile_collision_and_score_system));
     }
 }
 pub fn projectile_collision_and_score_system(

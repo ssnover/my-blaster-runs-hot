@@ -4,7 +4,8 @@ use bevy::utils::HashMap;
 use rand::Rng;
 
 use crate::components::{
-    AreaOfEffect, Enemy, FromPlayer, Moveable, Player, Projectile, Size, Velocity, RangedWeapon, Health,
+    AreaOfEffect, Enemy, FromPlayer, Health, Moveable, Player, Projectile, RangedWeapon, Size,
+    Velocity,
 };
 use crate::constants::{
     BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, PLAYER_ATTRACTION_FORCE,
@@ -12,15 +13,17 @@ use crate::constants::{
 };
 use crate::resources::{GameTextures, WindowSize};
 use crate::utils::{normalize_vec2, CooldownTimer};
-use crate::{PlayerScore, blaster};
+use crate::{blaster, PlayerScore};
+use crate::states::GameState;
 
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PostStartup, enemy_spawn_system)
-            .add_system(enemy_ai_system)
-            .add_system(enemy_blaster_system);
+        app.add_system_set(SystemSet::on_enter(GameState::MainGame).with_system(enemy_spawn_system))
+        .add_system_set(SystemSet::on_update(GameState::MainGame)
+            .with_system(enemy_ai_system)
+            .with_system(enemy_blaster_system));
     }
 }
 
@@ -114,7 +117,6 @@ fn enemy_ai_system(
         x_offset = 0.0;
         y_offset = 0.0;
         *enemy_vel = Velocity(total_vel);
-
     }
 }
 
@@ -127,7 +129,6 @@ fn enemy_blaster_system(
     let player_tf = player_query.get_single().unwrap();
 
     for (entity, enemy_tf, mut enemy_weapon) in enemy_query.iter_mut() {
-
         enemy_weapon.fire_rate_timer.tick(time.delta());
 
         if enemy_weapon.firing && enemy_weapon.fire_rate_timer.ready() {
@@ -146,5 +147,5 @@ fn enemy_blaster_system(
                 false,
             );
         }
-    }   
+    }
 }
