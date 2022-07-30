@@ -116,13 +116,15 @@ fn enemy_blaster_system(
     player_query: Query<(&Transform), With<Player>>,
     time: Res<Time>,
 ) {
-
     let player_tf = player_query.get_single().unwrap();
 
     for (entity, enemy_tf, mut enemy_weapon) in enemy_query.iter_mut() {
+
         enemy_weapon.fire_rate_timer.tick(time.delta());
 
         if enemy_weapon.firing && enemy_weapon.fire_rate_timer.ready() {
+            enemy_weapon.fire_rate_timer.trigger();
+
             enemy_weapon.aim_direction = Vec2::new(
                 player_tf.translation.x - enemy_tf.translation.x,
                 player_tf.translation.y - enemy_tf.translation.y,
