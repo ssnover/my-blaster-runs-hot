@@ -24,6 +24,34 @@ impl Plugin for EnemyPlugin {
     }
 }
 
+pub fn spawn_crab(cmds: &mut Commands, position: Vec2, texture: Handle<Image>) {
+    cmds.spawn_bundle(SpriteBundle {
+        texture,
+        transform: Transform {
+            scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
+            translation: Vec3::new(position.x, position.y, 0.),
+            ..Default::default()
+        },
+        ..Default::default()
+    })
+    .insert(Enemy)
+    .insert(Health(5))
+    .insert(Size(Vec2::new(50., 50.)))
+    .insert(Velocity::from(Vec2::new(0., 0.)))
+    .insert(RangedWeapon {
+        aim_direction: Vec2::new(1., 0.),
+        firing: true,
+        fire_rate_timer: CooldownTimer::from_seconds(0.5),
+        ..Default::default()
+    })
+    .insert(Moveable {
+        //Slower than player
+        solid: true,
+        speed_multiplier: 0.5,
+        ..Default::default()
+    });
+}
+
 fn enemy_spawn_system(
     mut cmds: Commands,
     game_textures: Res<GameTextures>,
@@ -33,35 +61,14 @@ fn enemy_spawn_system(
 
     // Add the enemy
     for i in 0..3 {
-        cmds.spawn_bundle(SpriteBundle {
-            texture: game_textures.enemy.clone(),
-            transform: Transform {
-                scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
-                //translation: Vec3::new( 200., 200., 0.),
-                translation: Vec3::new(
-                    rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
-                    rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
-                    0.,
-                ),
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(Enemy)
-        .insert(Health(5))
-        .insert(Size(Vec2::new(50., 50.)))
-        .insert(Velocity::from(Vec2::new(0., 0.)))
-        .insert(RangedWeapon {
-            aim_direction: Vec2::new(1., 0.),
-            fire_rate_timer: CooldownTimer::from_seconds(0.5),
-            firing: true,
-        })
-        .insert(Moveable {
-            //Slower than player
-            solid: true,
-            speed_multiplier: 0.5,
-            ..Default::default()
-        });
+        spawn_crab(
+            &mut cmds,
+            Vec2::new(
+                rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
+                rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
+            ),
+            game_textures.enemy.clone(),
+        );
     }
 }
 

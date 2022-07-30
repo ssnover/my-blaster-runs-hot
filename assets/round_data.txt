@@ -1,0 +1,3 @@
+max_spawns,number_of_civilians,number_of_crabs,number_of_bots,number_of_tanks,number_of_exploders
+5,5,10,0,0,0
+10,5,15,0,0,0
