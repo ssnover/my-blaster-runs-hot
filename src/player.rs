@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::blaster;
 use crate::components::{Moveable, Player, Projectile, RangedWeapon, Size, Velocity};
 use crate::constants::*;
+use crate::debug;
 use crate::resources::{BlasterHeat, Controller, GameTextures, WindowSize};
 use crate::utils::CooldownTimer;
 
@@ -114,7 +115,7 @@ fn player_fire_blaster_system(
     blaster_heat.value =
         0f32.max(blaster_heat.value - (time.delta_seconds() * BLASTER_COOLOFF_MULTIPLIER));
 
-    if blaster_heat.value >= MAX_BLASTER_HEAT {
+    if blaster_heat.value >= MAX_BLASTER_HEAT && !debug::is_overheat_disabled() {
         blaster_heat.overheat_cooldown_timer.trigger();
     }
 

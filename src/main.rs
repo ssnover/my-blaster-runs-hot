@@ -12,6 +12,7 @@ mod civilian;
 mod components;
 mod constants;
 mod enemy;
+mod debug;
 mod gamepad;
 mod movement;
 mod player;

@@ -4,7 +4,7 @@ use bevy::utils::HashMap;
 use rand::Rng;
 
 use crate::components::{
-    AreaOfEffect, Enemy, FromPlayer, Moveable, Player, Projectile, Size, Velocity, RangedWeapon,
+    AreaOfEffect, Enemy, FromPlayer, Moveable, Player, Projectile, Size, Velocity, RangedWeapon, Health,
 };
 use crate::constants::{
     BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, PLAYER_ATTRACTION_FORCE,
@@ -48,6 +48,7 @@ fn enemy_spawn_system(
             ..Default::default()
         })
         .insert(Enemy)
+        .insert(Health(5))
         .insert(Size(Vec2::new(50., 50.)))
         .insert(Velocity::from(Vec2::new(0., 0.)))
         .insert(RangedWeapon {
