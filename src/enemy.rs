@@ -3,7 +3,9 @@ use bevy::sprite::collide_aabb::collide;
 use bevy::utils::HashMap;
 use rand::Rng;
 
-use crate::components::{Enemy, FromPlayer, Moveable, NormalBlasterFire, Player, Size, Velocity, Health};
+use crate::components::{
+    Enemy, FromPlayer, Health, Moveable, NormalBlasterFire, Player, Size, Velocity,
+};
 use crate::constants::{
     BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, PLAYER_ATTRACTION_FORCE,
     SPRITE_SCALE, TIME_STEP,
@@ -22,6 +24,28 @@ impl Plugin for EnemyPlugin {
     }
 }
 
+pub fn spawn_crab(cmds: &mut Commands, position: Vec2, texture: Handle<Image>) {
+    cmds.spawn_bundle(SpriteBundle {
+        texture,
+        transform: Transform {
+            scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
+            translation: Vec3::new(position.x, position.y, 0.),
+            ..Default::default()
+        },
+        ..Default::default()
+    })
+    .insert(Enemy)
+    .insert(Health(5))
+    .insert(Size(Vec2::new(50., 50.)))
+    .insert(Velocity::from(Vec2::new(0., 0.)))
+    .insert(Moveable {
+        //Slower than player
+        solid: true,
+        speed_multiplier: 0.5,
+        ..Default::default()
+    });
+}
+
 fn enemy_spawn_system(
     mut cmds: Commands,
     game_textures: Res<GameTextures>,
@@ -31,30 +55,14 @@ fn enemy_spawn_system(
 
     // Add the enemy
     for i in 0..3 {
-        cmds.spawn_bundle(SpriteBundle {
-            texture: game_textures.enemy.clone(),
-            transform: Transform {
-                scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
-                //translation: Vec3::new( 200., 200., 0.),
-                translation: Vec3::new(
-                    rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
-                    rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
-                    0.,
-                ),
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .insert(Enemy)
-        .insert(Health(5))
-        .insert(Size(Vec2::new(50., 50.)))
-        .insert(Velocity::from(Vec2::new(0., 0.)))
-        .insert(Moveable {
-            //Slower than player
-            solid: true,
-            speed_multiplier: 0.5,
-            ..Default::default()
-        });
+        spawn_crab(
+            &mut cmds,
+            Vec2::new(
+                rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
+                rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
+            ),
+            game_textures.enemy.clone(),
+        );
     }
 }
 
@@ -119,10 +127,10 @@ fn enemy_despawn_system(
             );
             if collision.is_some() {
                 enemy_health.0 = enemy_health.0.saturating_sub(1);
-                    if(enemy_health.0 == 0) {
-                        score.0 += 3;
-                        cmds.entity(enemy_entity).despawn_recursive();
-                    }
+                if (enemy_health.0 == 0) {
+                    score.0 += 3;
+                    cmds.entity(enemy_entity).despawn_recursive();
+                }
                 cmds.entity(blaster_entity).despawn_recursive();
             }
         }
