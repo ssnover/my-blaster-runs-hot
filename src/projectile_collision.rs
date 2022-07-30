@@ -66,17 +66,15 @@ fn check_collision_with_player(
     projectile_tf: Vec3,
     projectile_size: Vec2,
 ) {
-    for (player_entity, player_tf, player_size) in player_query.iter() {
-        let collision = collide(
-            player_tf.translation,
-            player_size.0,
-            projectile_tf,
-            projectile_size,
-        );
-        if collision.is_some() {
-            cmds.entity(player_entity).despawn_recursive();
-            cmds.entity(project_entity).despawn_recursive();
-            break;
-        }
+    let (player_entity, player_tf, player_size) = player_query.get_single().unwrap();
+    let collision = collide(
+        player_tf.translation,
+        player_size.0,
+        projectile_tf,
+        projectile_size,
+    );
+    if collision.is_some() {
+        cmds.entity(player_entity).despawn_recursive();
+        cmds.entity(project_entity).despawn_recursive();
     }
 }
