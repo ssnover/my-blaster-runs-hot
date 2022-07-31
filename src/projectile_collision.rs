@@ -7,9 +7,10 @@ pub struct CollisionPlugin;
 
 impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
-
-        app.add_system_set(SystemSet::on_update(GameState::MainGame)
-            .with_system(projectile_collision_and_score_system));
+        app.add_system_set(
+            SystemSet::on_update(GameState::MainGame)
+                .with_system(projectile_collision_and_score_system),
+        );
     }
 }
 pub fn projectile_collision_and_score_system(
@@ -30,14 +31,13 @@ pub fn projectile_collision_and_score_system(
                 projectile_size.0,
             );
         } else {
-            if(check_collision_with_player(
+            if (check_collision_with_player(
                 &mut commands,
                 &mut player_query,
                 projectile_entity,
                 projectile_tf.translation,
                 projectile_size.0,
-            )){
-                
+            )) {
                 state.push(GameState::GameOver).unwrap();
             };
         }

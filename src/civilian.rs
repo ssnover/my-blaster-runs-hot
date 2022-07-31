@@ -10,9 +10,11 @@ pub struct CivilianPlugin;
 
 impl Plugin for CivilianPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_update(GameState::MainGame)
-            .with_system(civilian_ai_system)
-            .with_system(civilian_despawn_system));
+        app.add_system_set(
+            SystemSet::on_update(GameState::MainGame)
+                .with_system(civilian_ai_system)
+                .with_system(civilian_despawn_system),
+        );
     }
 }
 

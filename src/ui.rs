@@ -8,11 +8,10 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-
-        app.add_system_set(SystemSet::on_enter(GameState::MainGame)
-            .with_system(spawn_ui_system))
-            .add_system_set(SystemSet::on_update(GameState::MainGame)
-            .with_system(update_score_system));
+        app.add_system_set(SystemSet::on_enter(GameState::MainGame).with_system(spawn_ui_system))
+            .add_system_set(
+                SystemSet::on_update(GameState::MainGame).with_system(update_score_system),
+            );
     }
 }
 

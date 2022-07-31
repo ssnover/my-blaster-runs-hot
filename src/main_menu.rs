@@ -114,3 +114,4 @@ fn setup_menu(mut commands: Commands, assets: Res<AssetServer>,) {
         });
     commands.insert_resource(ui_assets);
 }
+

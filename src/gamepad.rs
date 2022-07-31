@@ -6,7 +6,9 @@ pub struct GamepadPlugin;
 
 impl Plugin for GamepadPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_update(GameState::MainGame).with_system(gamepad_connection_system));
+        app.add_system_set(
+            SystemSet::on_update(GameState::MainGame).with_system(gamepad_connection_system),
+        );
     }
 }
 

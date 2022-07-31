@@ -13,11 +13,12 @@ pub struct SpawnManagerPlugin;
 
 impl Plugin for SpawnManagerPlugin {
     fn build(&self, app: &mut App) {
-        
-        app.add_system_set(SystemSet::on_enter(GameState::MainGame)
-                .with_system(spawn_startup_system))
-            .add_system_set(SystemSet::on_update(GameState::MainGame)
-                .with_system(spawn_manager_system));
+        app.add_system_set(
+            SystemSet::on_enter(GameState::MainGame).with_system(spawn_startup_system),
+        )
+        .add_system_set(
+            SystemSet::on_update(GameState::MainGame).with_system(spawn_manager_system),
+        );
     }
 }
 

@@ -56,7 +56,6 @@ fn main() {
         .add_plugin(ui::UiPlugin)
         .add_plugin(CollisionPlugin)
         .add_plugin(GameOverMenuPlugin)
-        
         .add_startup_system(setup_system)
         .run();
 }

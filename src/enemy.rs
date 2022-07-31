@@ -12,18 +12,22 @@ use crate::constants::{
     SPRITE_SCALE, TIME_STEP,
 };
 use crate::resources::{GameTextures, WindowSize};
+use crate::states::GameState;
 use crate::utils::{normalize_vec2, CooldownTimer};
 use crate::{blaster, PlayerScore};
-use crate::states::GameState;
 
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(GameState::MainGame).with_system(enemy_spawn_system))
-        .add_system_set(SystemSet::on_update(GameState::MainGame)
-            .with_system(enemy_ai_system)
-            .with_system(enemy_blaster_system));
+        app.add_system_set(
+            SystemSet::on_enter(GameState::MainGame).with_system(enemy_spawn_system),
+        )
+        .add_system_set(
+            SystemSet::on_update(GameState::MainGame)
+                .with_system(enemy_ai_system)
+                .with_system(enemy_blaster_system),
+        );
     }
 }
 
