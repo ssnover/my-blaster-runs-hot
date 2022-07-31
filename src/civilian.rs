@@ -4,14 +4,17 @@ use rand::Rng;
 
 use crate::components::{Civilian, Moveable, Player, Size, Velocity};
 use crate::resources::{PlayerScore, WindowSize};
+use crate::states::GameState;
 
 pub struct CivilianPlugin;
 
 impl Plugin for CivilianPlugin {
     fn build(&self, app: &mut App) {
-        app //.add_startup_system_to_stage(StartupStage::PostStartup, spawn_civilian_system)
-            .add_system(civilian_ai_system)
-            .add_system(civilian_despawn_system);
+        app.add_system_set(
+            SystemSet::on_update(GameState::MainGame)
+                .with_system(civilian_ai_system)
+                .with_system(civilian_despawn_system),
+        );
     }
 }
 

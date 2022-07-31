@@ -7,13 +7,18 @@ use crate::components::{Civilian, Enemy};
 use crate::enemy::spawn_crab;
 use crate::resources::{GameTextures, SpawnQueue, SpawnType, WindowSize};
 use crate::rounds::RoundTracker;
+use crate::states::GameState;
 
 pub struct SpawnManagerPlugin;
 
 impl Plugin for SpawnManagerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PostStartup, spawn_startup_system)
-            .add_system(spawn_manager_system);
+        app.add_system_set(
+            SystemSet::on_enter(GameState::MainGame).with_system(spawn_startup_system),
+        )
+        .add_system_set(
+            SystemSet::on_update(GameState::MainGame).with_system(spawn_manager_system),
+        );
     }
 }
 

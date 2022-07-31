@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use bevy::prelude::*;
+use bevy_inspector_egui::WorldInspectorPlugin;
 
 const QWARK_SPRITE: &str = "qwark.png";
 const QWARK_SIZE: (f32, f32) = (500., 500.);
@@ -8,20 +9,29 @@ const ENEMY_SPRITE: &str = "tux.png";
 const ENEMY_SIZE: (f32, f32) = (500., 500.);
 
 mod blaster;
+mod camera;
 mod civilian;
 mod components;
 mod constants;
 mod debug;
 mod enemy;
+mod game_over;
 mod gamepad;
+mod main_menu;
 mod movement;
 mod player;
+mod projectile_collision;
 mod resources;
 mod rounds;
 mod spawn_manager;
+mod states;
 mod ui;
 mod utils;
+
 use constants::*;
+use game_over::GameOverMenuPlugin;
+use main_menu::MainMenuPlugin;
+use projectile_collision::CollisionPlugin;
 use resources::{BlasterHeat, GameFont, GameTextures, PlayerScore, WindowSize};
 use utils::CooldownTimer;
 
@@ -34,6 +44,9 @@ fn main() {
             height: 768.,
             ..Default::default()
         })
+        .add_state(states::GameState::MainMenu)
+
+        .add_plugin(MainMenuPlugin)
         .add_plugins(DefaultPlugins)
         .add_plugin(civilian::CivilianPlugin)
         .add_plugin(gamepad::GamepadPlugin)
@@ -43,6 +56,11 @@ fn main() {
         .add_plugin(rounds::RoundManagerPlugin)
         .add_plugin(spawn_manager::SpawnManagerPlugin)
         .add_plugin(ui::UiPlugin)
+        .add_plugin(CollisionPlugin)
+        .add_plugin(GameOverMenuPlugin)
+
+        //.add_plugin(WorldInspectorPlugin::new())
+
         .add_startup_system(setup_system)
         .run();
 }

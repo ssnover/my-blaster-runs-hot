@@ -41,7 +41,9 @@ pub struct Enemy;
 pub struct Civilian;
 
 #[derive(Component)]
-pub struct NormalBlasterFire;
+pub struct Projectile {
+    pub from_player: bool,
+}
 
 #[derive(Component)]
 pub struct RangedWeapon {
@@ -71,3 +73,6 @@ pub struct Health(pub u32);
 
 #[derive(Component)]
 pub struct Damage(pub u32);
+
+#[derive(Component)]
+pub struct AreaOfEffect(pub bool);
