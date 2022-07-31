@@ -12,7 +12,7 @@ impl Plugin for GameOverMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(SystemSet::on_enter(GameState::GameOver)
                 .with_system(setup_menu)
-                .with_system(despawn_all))
+                .with_system(despawn_all_non_ui))
             .add_system_set(SystemSet::on_pause(GameState::GameOver).with_system(despawn_menu))
             .add_system_set(
                 SystemSet::on_update(GameState::GameOver).with_system(handle_quit_button),
@@ -141,7 +141,13 @@ fn setup_menu(
     commands.insert_resource(ui_assets);
 }
 
-fn despawn_all( mut commands: Commands, query: Query< Entity , Without<ScoreUi> >,){
+fn despawn_all_non_ui( mut commands: Commands, query: Query< Entity , Without<ScoreUi> >,){
+    for entity in query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+}
+
+fn despawn_all( mut commands: Commands, query: Query< Entity>, ){
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }

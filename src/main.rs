@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use bevy::prelude::*;
+use bevy_inspector_egui::WorldInspectorPlugin;
 
 const QWARK_SPRITE: &str = "qwark.png";
 const QWARK_SIZE: (f32, f32) = (500., 500.);
@@ -44,6 +45,7 @@ fn main() {
             ..Default::default()
         })
         .add_state(states::GameState::MainMenu)
+
         .add_plugin(MainMenuPlugin)
         .add_plugins(DefaultPlugins)
         .add_plugin(civilian::CivilianPlugin)
@@ -56,6 +58,9 @@ fn main() {
         .add_plugin(ui::UiPlugin)
         .add_plugin(CollisionPlugin)
         .add_plugin(GameOverMenuPlugin)
+
+        //.add_plugin(WorldInspectorPlugin::new())
+
         .add_startup_system(setup_system)
         .run();
 }
