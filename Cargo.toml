@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.7.0", features = ["dynamic"] }
+bevy-inspector-egui = "0.11"
 csv = "1.1"
 num-derive = "0.3.3"
 num-traits = "0.2.15"

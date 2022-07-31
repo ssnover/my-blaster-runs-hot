@@ -4,23 +4,30 @@ use bevy::utils::HashMap;
 use rand::Rng;
 
 use crate::components::{
-    Enemy, FromPlayer, Health, Moveable, NormalBlasterFire, Player, Size, Velocity,
+    AreaOfEffect, Enemy, FromPlayer, Health, Moveable, Player, Projectile, RangedWeapon, Size,
+    Velocity,
 };
 use crate::constants::{
     BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, PLAYER_ATTRACTION_FORCE,
     SPRITE_SCALE, TIME_STEP,
 };
 use crate::resources::{GameTextures, WindowSize};
-use crate::utils::normalize_vec2;
-use crate::PlayerScore;
+use crate::states::GameState;
+use crate::utils::{normalize_vec2, CooldownTimer};
+use crate::{blaster, PlayerScore};
 
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PostStartup, enemy_spawn_system)
-            .add_system(enemy_ai_system)
-            .add_system(enemy_despawn_system);
+        app.add_system_set(
+            SystemSet::on_enter(GameState::MainGame).with_system(enemy_spawn_system),
+        )
+        .add_system_set(
+            SystemSet::on_update(GameState::MainGame)
+                .with_system(enemy_ai_system)
+                .with_system(enemy_blaster_system),
+        );
     }
 }
 
@@ -38,6 +45,12 @@ pub fn spawn_crab(cmds: &mut Commands, position: Vec2, texture: Handle<Image>) {
     .insert(Health(5))
     .insert(Size(Vec2::new(50., 50.)))
     .insert(Velocity::from(Vec2::new(0., 0.)))
+    .insert(RangedWeapon {
+        aim_direction: Vec2::new(1., 0.),
+        firing: true,
+        fire_rate_timer: CooldownTimer::from_seconds(0.5),
+        ..Default::default()
+    })
     .insert(Moveable {
         //Slower than player
         solid: true,
@@ -111,28 +124,32 @@ fn enemy_ai_system(
     }
 }
 
-fn enemy_despawn_system(
+fn enemy_blaster_system(
     mut cmds: Commands,
-    mut enemy_query: Query<(Entity, &Transform, &Size, &mut Health), With<Enemy>>,
-    blaster_query: Query<(Entity, &Transform, &Size), (With<FromPlayer>, With<NormalBlasterFire>)>,
-    mut score: ResMut<PlayerScore>,
+    mut enemy_query: Query<(Entity, &Transform, &mut RangedWeapon), With<Enemy>>,
+    player_query: Query<(&Transform), With<Player>>,
+    time: Res<Time>,
 ) {
-    for (blaster_entity, blaster_tf, blaster_size) in blaster_query.iter() {
-        for (enemy_entity, enemy_tf, enemy_size, mut enemy_health) in enemy_query.iter_mut() {
-            let collision = collide(
-                enemy_tf.translation,
-                enemy_size.0,
-                blaster_tf.translation,
-                blaster_size.0,
+    let player_tf = player_query.get_single().unwrap();
+
+    for (entity, enemy_tf, mut enemy_weapon) in enemy_query.iter_mut() {
+        enemy_weapon.fire_rate_timer.tick(time.delta());
+
+        if enemy_weapon.firing && enemy_weapon.fire_rate_timer.ready() {
+            enemy_weapon.fire_rate_timer.trigger();
+
+            enemy_weapon.aim_direction = Vec2::new(
+                player_tf.translation.x - enemy_tf.translation.x,
+                player_tf.translation.y - enemy_tf.translation.y,
             );
-            if collision.is_some() {
-                enemy_health.0 = enemy_health.0.saturating_sub(1);
-                if (enemy_health.0 == 0) {
-                    score.0 += 3;
-                    cmds.entity(enemy_entity).despawn_recursive();
-                }
-                cmds.entity(blaster_entity).despawn_recursive();
-            }
+
+            blaster::create_blaster_shot(
+                &mut cmds,
+                enemy_tf.translation,
+                enemy_weapon.aim_direction,
+                Color::rgb_u8(0, 0, 240),
+                false,
+            );
         }
     }
 }
