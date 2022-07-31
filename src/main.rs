@@ -45,7 +45,7 @@ fn main() {
             ..Default::default()
         })
         .add_state(states::GameState::MainMenu)
-
+        //start plugins
         .add_plugin(MainMenuPlugin)
         .add_plugins(DefaultPlugins)
         .add_plugin(civilian::CivilianPlugin)
@@ -58,9 +58,8 @@ fn main() {
         .add_plugin(ui::UiPlugin)
         .add_plugin(CollisionPlugin)
         .add_plugin(GameOverMenuPlugin)
-
         //.add_plugin(WorldInspectorPlugin::new())
-
+        //startup system
         .add_startup_system(setup_system)
         .run();
 }
