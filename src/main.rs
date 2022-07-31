@@ -12,16 +12,18 @@ mod civilian;
 mod components;
 mod constants;
 mod debug;
+mod enemy;
 mod gamepad;
 mod movement;
 mod player;
 mod resources;
+mod rounds;
+mod spawn_manager;
 mod ui;
 mod utils;
 use constants::*;
 use resources::{BlasterHeat, GameFont, GameTextures, PlayerScore, WindowSize};
 use utils::CooldownTimer;
-mod enemy;
 
 fn main() {
     App::new()
@@ -38,6 +40,8 @@ fn main() {
         .add_plugin(player::PlayerPlugin)
         .add_plugin(enemy::EnemyPlugin)
         .add_plugin(movement::MovementPlugin)
+        .add_plugin(rounds::RoundManagerPlugin)
+        .add_plugin(spawn_manager::SpawnManagerPlugin)
         .add_plugin(ui::UiPlugin)
         .add_startup_system(setup_system)
         .run();

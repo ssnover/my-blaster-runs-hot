@@ -1,0 +1,14 @@
+Fixes
+    -Make a state switching function not just hard coding where the state switches are
+    -Add more generic components, this would make transitions from game states easier. For example just despawn everything "living" and background 
+    keeping the important UI components like score
+        -UI components
+        -Background components
+        -"Living" entity components
+Features
+    -Prettier menus
+    -Audio
+    -Lives for qwark
+    -WASM 
+Issues
+    -App exit leads to some errors 
