@@ -14,6 +14,7 @@ mod components;
 mod constants;
 mod debug;
 mod enemy;
+mod game_over;
 mod gamepad;
 mod main_menu;
 mod movement;
@@ -27,6 +28,7 @@ mod ui;
 mod utils;
 
 use constants::*;
+use game_over::GameOverMenuPlugin;
 use main_menu::MainMenuPlugin;
 use projectile_collision::CollisionPlugin;
 use resources::{BlasterHeat, GameFont, GameTextures, PlayerScore, WindowSize};
@@ -53,6 +55,7 @@ fn main() {
         .add_plugin(spawn_manager::SpawnManagerPlugin)
         .add_plugin(ui::UiPlugin)
         .add_plugin(CollisionPlugin)
+        .add_plugin(GameOverMenuPlugin)
         
         .add_startup_system(setup_system)
         .run();

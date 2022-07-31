@@ -1,31 +1,19 @@
-// We need our game states so we can check what state we are in and states to 
-// transition to
+
+use crate::components::ScoreUi;
+use crate::resources::PlayerScore;
 use crate::states::GameState; 
+use crate::main_menu::{ButtonActive, UIAssets};
 
-// The Exit button is going to need to be able to close the game so we have to 
-// use 'AppExit'
 use bevy::app::AppExit;
-
 use bevy::{prelude::*, ui::FocusPolicy};
 
-pub struct MainMenu;
+pub struct GameOverMenuPlugin;
 
-pub struct MainMenuPlugin;
-
-#[derive(Component)]
-pub struct ButtonActive(pub bool);
-
-pub struct UIAssets {
-    pub font: Handle<Font>,
-    pub button: Handle<Image>,
-    pub button_pressed: Handle<Image>,
-}
-
-impl Plugin for MainMenuPlugin {
+impl Plugin for GameOverMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup_menu)
-            .add_system_set(SystemSet::on_pause(GameState::MainMenu).with_system(despawn_menu))
-            .add_system(handle_start_button);
+        app.add_system_set(SystemSet::on_enter(GameState::GameOver).with_system(setup_menu))
+            .add_system_set(SystemSet::on_pause(GameState::GameOver).with_system(despawn_menu))
+            .add_system_set(SystemSet::on_update(GameState::GameOver).with_system(handle_quit_button));
     }
 }
 
@@ -35,11 +23,16 @@ fn despawn_menu(mut commands: Commands, button_query: Query<Entity, With<Button>
     }
 }
 
-fn handle_start_button(
+fn exit_system(mut exit: EventWriter<AppExit>) {
+    exit.send(AppExit);
+}
+
+fn handle_quit_button(
     mut commands: Commands, 
     mut interaction_query: Query< (&Children, &mut ButtonActive, &Interaction), Changed<Interaction> >,
     mut image_query: Query<&mut UiImage>,
     mut state: ResMut<State<GameState>>,
+    mut app_exit: EventWriter<AppExit>,
     ui_assets: Res<UIAssets>,
     
 ) {
@@ -51,7 +44,7 @@ fn handle_start_button(
             Interaction::Clicked => {
                 if active.0 {
                     image.0 = ui_assets.button_pressed.clone();
-                    state.push(GameState::MainGame).unwrap();
+                    app_exit.send(AppExit)
                 }
             }
             Interaction::Hovered | Interaction::None => {
@@ -61,14 +54,37 @@ fn handle_start_button(
     }
 }
 
-fn setup_menu(mut commands: Commands, assets: Res<AssetServer>,) {
+
+fn setup_menu(mut commands: Commands, assets: Res<AssetServer>, score: Res<PlayerScore>, mut query: Query<&mut Text, With<ScoreUi>>) {
     let ui_assets = UIAssets {
         font: assets.load("FiraSans-Bold.ttf"),
         button: assets.load("button.png"),
         button_pressed: assets.load("button_pressed.png"),
     };
 
+    let mut score_text = query.get_single_mut().unwrap();
+    score_text.sections[0].value = format!("Score: {}", score.0);
+
     commands.spawn_bundle(UiCameraBundle::default());
+    commands
+    .spawn_bundle(
+        Text2dBundle {
+            text: Text::with_section(
+                format!("Score: {}", score.0),
+                TextStyle {
+                    font: ui_assets.font.clone(),
+                    font_size: 60.0,
+                    color: Color::GREEN,
+                },
+                TextAlignment {
+                    vertical: VerticalAlign::Top,
+                    horizontal: HorizontalAlign::Left,
+                },
+            ),
+            ..Default::default()
+        }
+    );
+
     commands
         .spawn_bundle(ButtonBundle {
             style: Style {
@@ -99,7 +115,7 @@ fn setup_menu(mut commands: Commands, assets: Res<AssetServer>,) {
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
                         text: Text::with_section(
-                            "Start Game",
+                            "Quit Game",
                             TextStyle {
                                 font: ui_assets.font.clone(),
                                 font_size: 40.0,

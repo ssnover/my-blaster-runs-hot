@@ -17,6 +17,7 @@ pub fn projectile_collision_and_score_system(
     mut enemy_query: Query<(Entity, &Transform, &Size), With<Enemy>>,
     mut player_query: Query<(Entity, &Transform, &Size), With<Player>>,
     mut blaster_query: Query<(Entity, &Transform, &Size, &Projectile)>,
+    mut state: ResMut<State<GameState>>,
 ) {
     // check collision with objects
     for (projectile_entity, projectile_tf, projectile_size, projectile) in blaster_query.iter() {
@@ -29,13 +30,16 @@ pub fn projectile_collision_and_score_system(
                 projectile_size.0,
             );
         } else {
-            check_collision_with_player(
+            if(check_collision_with_player(
                 &mut commands,
                 &mut player_query,
                 projectile_entity,
                 projectile_tf.translation,
                 projectile_size.0,
-            );
+            )){
+                
+                state.push(GameState::GameOver).unwrap();
+            };
         }
     }
 }
@@ -68,7 +72,7 @@ fn check_collision_with_player(
     project_entity: bevy::prelude::Entity,
     projectile_tf: Vec3,
     projectile_size: Vec2,
-) {
+) -> bool {
     let (player_entity, player_tf, player_size) = player_query.get_single().unwrap();
     let collision = collide(
         player_tf.translation,
@@ -77,7 +81,7 @@ fn check_collision_with_player(
         projectile_size,
     );
     if collision.is_some() {
-        cmds.entity(player_entity).despawn_recursive();
-        cmds.entity(project_entity).despawn_recursive();
+        return true;
     }
+    return false;
 }
