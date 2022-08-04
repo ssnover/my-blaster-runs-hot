@@ -72,4 +72,7 @@ pub struct ScoreUi;
 pub struct Health(pub u32);
 
 #[derive(Component)]
+pub struct Damage(pub u32);
+
+#[derive(Component)]
 pub struct AreaOfEffect(pub bool);

@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::{
-    AreaOfEffect, FromEnemy, FromPlayer, Moveable, Projectile, Size, Velocity,
-};
+use crate::components::{Damage, FromEnemy, FromPlayer, Moveable, Projectile, Size, Velocity};
 
 pub fn create_blaster_shot(
     cmds: &mut Commands,

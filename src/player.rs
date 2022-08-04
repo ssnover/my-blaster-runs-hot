@@ -51,13 +51,26 @@ fn player_spawn_system(
 }
 
 fn player_control_system(
-    mut query: Query<(&mut Velocity, &mut RangedWeapon), With<Player>>,
+    mut query: Query<(&mut Velocity, &mut RangedWeapon, &Transform), With<Player>>,
     controller: Option<Res<Controller>>,
     keys: Res<Input<KeyCode>>,
     axes: Res<Axis<GamepadAxis>>,
     buttons: Res<Input<GamepadButton>>,
+    mouse_buttons: Res<Input<MouseButton>>,
+    win_size: Res<WindowSize>,
+    windows: Res<Windows>,
 ) {
-    let (mut velocity, mut weapon_data) = query.get_single_mut().unwrap();
+    let (mut velocity, mut weapon_data, player_tf) = query.get_single_mut().unwrap();
+
+    let window = windows.get_primary().unwrap();
+
+    if let Some(position) = window.cursor_position() {
+        weapon_data.aim_direction = Vec2::new(
+            position.x - win_size.w / 2.0 - player_tf.translation.x,
+            position.y - win_size.h / 2.0 - player_tf.translation.y,
+        );
+    }
+
     if let Some(controller) = controller {
         let axis_lx = GamepadAxis(controller.0, GamepadAxisType::LeftStickX);
         let axis_ly = GamepadAxis(controller.0, GamepadAxisType::LeftStickY);
@@ -92,7 +105,8 @@ fn player_control_system(
             velocity.x = 0.;
         }
 
-        weapon_data.firing = keys.pressed(KeyCode::RShift);
+        weapon_data.firing = mouse_buttons.pressed(MouseButton::Left);
+
         if keys.pressed(KeyCode::Up) {
             weapon_data.aim_direction.y = 1.;
         }
