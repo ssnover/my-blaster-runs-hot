@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 use crate::blaster;
 use crate::components::{Moveable, Player, Projectile, RangedWeapon, Size, Velocity};
@@ -11,14 +12,17 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_enter(GameState::MainGame).with_system(player_spawn_system),
-        )
-        .add_system_set(
-            SystemSet::on_update(GameState::MainGame)
-                .with_system(player_control_system)
-                .with_system(player_fire_blaster_system),
-        );
+        app.add_event::<LivingBeingHitEvent>()
+            .add_event::<LivingBeingDeathEvent>()
+            .add_event::<BulletFiredEvent>()
+            .add_system_set(
+                SystemSet::on_enter(GameState::MainGame).with_system(player_spawn_system),
+            )
+            .add_system_set(
+                SystemSet::on_update(GameState::MainGame)
+                    .with_system(player_control_system)
+                    .with_system(player_fire_blaster_system),
+            );
     }
 }
 
@@ -27,45 +31,108 @@ fn player_spawn_system(
     game_textures: Res<GameTextures>,
     win_size: Res<WindowSize>,
 ) {
-    // Add the player
-    cmds.spawn_bundle(SpriteBundle {
-        texture: game_textures.player.clone(),
-        transform: Transform {
-            scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
+    let rigid_body = RigidBodyBundle {
+        position: Vec2::new(0., 0).into(),
+        activation: RigidBodyActivation::cannot_sleep(),
+        forces: RigidBodyForce {
+            gravity_scale: 0.,
             ..Default::default()
         },
         ..Default::default()
-    })
-    .insert(Player)
-    .insert(Velocity::from(Vec2::new(0., 0.)))
-    .insert(Moveable {
-        speed_multiplier: 1.,
+    };
+    let collider = ColliderBundle {
+        shape: ColliderShape::rectangle(50., 50., 0.1),
+        flags: ColliderFlags {
+            active_events: ActiveEvents::CONTACT_EVENTS,
+            ..Default::default()
+        },
         ..Default::default()
-    })
-    .insert(Size(Vec2::new(50., 50.)))
-    .insert(RangedWeapon {
-        aim_direction: Vec2::new(1., 0.),
-        fire_rate_timer: CooldownTimer::from_seconds(0.5),
+    };
+
+    // Add the player sprite
+    let sprite = SpriteBundle {
+        material: materials.bullet_material.clone(),
+        sprite: Sprite::new(Vec2::new(10., 10.)),
         ..Default::default()
-    });
+    };
+
+    cmds.spawn_bundle(sprite)
+        .insert_bundle(rigid_body)
+        .insert_bundle(collider)
+        .insert(RigidBodyPositionSync::Discrete)
+        .insert(Player { speed: 1.5 })
 }
 
-fn player_control_system(
-    mut query: Query<(&mut Velocity, &mut RangedWeapon), With<Player>>,
+fn player_move_system(
+    mut players: Query<(&mut Player, &mut RigidBodyVelocity)>,
+
     controller: Option<Res<Controller>>,
-    keys: Res<Input<KeyCode>>,
     axes: Res<Axis<GamepadAxis>>,
     buttons: Res<Input<GamepadButton>>,
+
+    keys: Res<Input<KeyCode>>,
 ) {
-    let (mut velocity, mut weapon_data) = query.get_single_mut().unwrap();
+    let mut player_vel = Vec2::new(0.0, 0.0);
+
     if let Some(controller) = controller {
         let axis_lx = GamepadAxis(controller.0, GamepadAxisType::LeftStickX);
         let axis_ly = GamepadAxis(controller.0, GamepadAxisType::LeftStickY);
 
         if let (Some(x), Some(y)) = (axes.get(axis_lx), axes.get(axis_ly)) {
-            velocity.x = x;
-            velocity.y = y;
+            player_vel.x = x;
+            player_vel.y = y;
         }
+    } else {
+        if keys.pressed(KeyCode::W) {
+            player_vel.y = 1.;
+        } else if keys.pressed(KeyCode::S) {
+            player_vel.y = -1.;
+        } else {
+            player_vel.y = 0.;
+        }
+        if keys.pressed(KeyCode::D) {
+            player_vel.x = 1.;
+        } else if keys.pressed(KeyCode::A) {
+            player_vel.x = -1.;
+        } else {
+            player_vel.x = 0.;
+        }
+    }
+
+    for (mut player, mut velocity, mut position) in players.iter_mut() {
+        velocity.linvel = player_vel.into();
+    }
+}
+
+fn player_fire_aim_system(
+    mut cmds: Commands,
+    time: Res<Time>,
+    mut blaster_heat: ResMut<BlasterHeat>,
+
+    //Why the with player? Check the tutorial
+    mut players: Query<(&mut Player, &mut RigidBodyPosition), With<Player>>,
+
+    mut send_fire_event: EventWriter<BulletFiredEvent>,
+
+    controller: Option<Res<Controller>>,
+    axes: Res<Axis<GamepadAxis>>,
+    buttons: Res<Input<GamepadButton>>,
+
+    mouse_buttons: Res<Input<MouseButton>>,
+    win_size: Res<WindowSize>,
+    windows: Res<Windows>,
+) {
+    let mut weapon_dir = Vec2::new(0.0, 0.0);
+
+    let window = windows.get_primary().unwrap();
+
+    if let Some(cursor) = window.cursor_position() {
+        weapon_dir = Vec2::new(
+            cursor.x - win_size.w / 2.0 - player_tf.translation.x,
+            cursor.y - win_size.h / 2.0 - player_tf.translation.y,
+        );
+    }
+    if let Some(controller) = controller {
         let normal_fire_button = GamepadButton(controller.0, GamepadButtonType::LeftTrigger);
         weapon_data.firing = buttons.pressed(normal_fire_button);
 
@@ -73,48 +140,11 @@ fn player_control_system(
         let axis_ry = GamepadAxis(controller.0, GamepadAxisType::RightStickY);
         if let (Some(x), Some(y)) = (axes.get(axis_rx), axes.get(axis_ry)) {
             if x.abs() > 0.2 || y.abs() > 0.2 {
-                weapon_data.aim_direction = Vec2::new(x, y);
+                weapon_dir = Vec2::new(x, y);
             }
         }
-    } else {
-        if keys.pressed(KeyCode::W) {
-            velocity.y = 1.;
-        } else if keys.pressed(KeyCode::S) {
-            velocity.y = -1.;
-        } else {
-            velocity.y = 0.;
-        }
-        if keys.pressed(KeyCode::D) {
-            velocity.x = 1.;
-        } else if keys.pressed(KeyCode::A) {
-            velocity.x = -1.;
-        } else {
-            velocity.x = 0.;
-        }
-
-        weapon_data.firing = keys.pressed(KeyCode::RShift);
-        if keys.pressed(KeyCode::Up) {
-            weapon_data.aim_direction.y = 1.;
-        }
-        if keys.pressed(KeyCode::Down) {
-            weapon_data.aim_direction.y = -1.;
-        }
-        if keys.pressed(KeyCode::Left) {
-            weapon_data.aim_direction.x = -1.;
-        }
-        if keys.pressed(KeyCode::Right) {
-            weapon_data.aim_direction.x = 1.;
-        }
     }
-}
 
-fn player_fire_blaster_system(
-    mut cmds: Commands,
-    time: Res<Time>,
-    mut blaster_heat: ResMut<BlasterHeat>,
-    mut query: Query<(&Transform, &mut RangedWeapon), With<Player>>,
-) {
-    let (tf, mut weapon_data) = query.get_single_mut().unwrap();
     weapon_data.fire_rate_timer.tick(time.delta());
     blaster_heat.overheat_cooldown_timer.tick(time.delta());
     blaster_heat.value =

@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use bevy::utils::HashMap;
+use bevy_rapier2d::prelude::*;
 use rand::Rng;
 
 use crate::components::{
@@ -32,31 +33,36 @@ impl Plugin for EnemyPlugin {
 }
 
 pub fn spawn_crab(cmds: &mut Commands, position: Vec2, texture: Handle<Image>) {
-    cmds.spawn_bundle(SpriteBundle {
-        texture,
-        transform: Transform {
-            scale: Vec3::new(SPRITE_SCALE, SPRITE_SCALE, 1.),
-            translation: Vec3::new(position.x, position.y, 0.),
+    let rigid_body = RigidBodyBundle {
+        position: position,
+        activation: RigidBodyActivation::cannot_sleep(),
+        forces: RigidBodyForce {
+            gravity_scale: 0.,
             ..Default::default()
         },
         ..Default::default()
-    })
-    .insert(Enemy)
-    .insert(Health(5))
-    .insert(Size(Vec2::new(50., 50.)))
-    .insert(Velocity::from(Vec2::new(0., 0.)))
-    .insert(RangedWeapon {
-        aim_direction: Vec2::new(1., 0.),
-        firing: true,
-        fire_rate_timer: CooldownTimer::from_seconds(0.5),
+    };
+
+    let collider = ColliderBundle {
+        shape: ColliderShape::rectangle(50., 50., 0),
+        flags: ColliderFlags {
+            active_events: ActiveEvents::CONTACT_EVENTS,
+            ..Default::default()
+        },
+    };
+
+    let sprite = SpriteBundle {
+        material: materials.bullet_material.clone(),
+        sprite: Sprite::new(Vec2::new(10., 10.)),
         ..Default::default()
-    })
-    .insert(Moveable {
-        //Slower than player
-        solid: true,
-        speed_multiplier: 0.5,
-        ..Default::default()
-    });
+    };
+
+    cmds.spawn_bundle(sprite)
+        .insert_bundle(rigid_body)
+        .insert_bundle(collider)
+        .insert(RigidBodyPositionSync::Discrete)
+        .insert(LivingBeing)
+        .insert(Enemy)
 }
 
 fn enemy_spawn_system(
@@ -81,10 +87,10 @@ fn enemy_spawn_system(
 
 fn enemy_ai_system(
     mut cmds: Commands,
-    mut enemy_query: Query<(Entity, &mut Velocity, &Transform), With<Enemy>>,
-    player_query: Query<(&Transform), With<Player>>,
+    mut enemy_query: Query<(&mut RigidBodyVelocity), With<Enemy>>,
+    player_query: Query<(&RigidBodyPosition), With<Player>>,
 ) {
-    let player_tf = player_query.get_single().unwrap();
+    let player_position = player_query.get_single().unwrap();
     let mut x_offset = 0.0;
     let mut y_offset = 0.0;
     let mut entity_counter = 0.;
