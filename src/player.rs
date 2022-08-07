@@ -1,10 +1,13 @@
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
+use bevy_rapier2d::prelude::Velocity;
+use bevy_rapier2d::rapier::prelude::*;
+use nalgebra::{vector, Vector2};
 
-use crate::blaster;
-use crate::components::{Moveable, Player, Projectile, RangedWeapon, Size, Velocity};
+use crate::blaster::BlasterFiredEvent;
+use crate::components::{AnimationTimer, Moveable, Player, Projectile, RangedWeapon, Size};
 use crate::constants::*;
 use crate::debug;
+use crate::projectile_collision::{LivingBeingDeathEvent, LivingBeingHitEvent};
 use crate::resources::{BlasterHeat, Controller, GameTextures, WindowSize};
 use crate::states::GameState;
 use crate::utils::CooldownTimer;
@@ -14,14 +17,14 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<LivingBeingHitEvent>()
             .add_event::<LivingBeingDeathEvent>()
-            .add_event::<BulletFiredEvent>()
+            .add_event::<BlasterFiredEvent>()
             .add_system_set(
                 SystemSet::on_enter(GameState::MainGame).with_system(player_spawn_system),
             )
             .add_system_set(
                 SystemSet::on_update(GameState::MainGame)
-                    .with_system(player_control_system)
-                    .with_system(player_fire_blaster_system),
+                    .with_system(player_move_system)
+                    .with_system(player_fire_aim_system),
             );
     }
 }
@@ -30,41 +33,52 @@ fn player_spawn_system(
     mut cmds: Commands,
     game_textures: Res<GameTextures>,
     win_size: Res<WindowSize>,
+
+    assest_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    let rigid_body = RigidBodyBundle {
-        position: Vec2::new(0., 0).into(),
-        activation: RigidBodyActivation::cannot_sleep(),
-        forces: RigidBodyForce {
-            gravity_scale: 0.,
-            ..Default::default()
-        },
-        ..Default::default()
-    };
-    let collider = ColliderBundle {
-        shape: ColliderShape::rectangle(50., 50., 0.1),
-        flags: ColliderFlags {
-            active_events: ActiveEvents::CONTACT_EVENTS,
-            ..Default::default()
-        },
-        ..Default::default()
-    };
+    //Ripped my own code from the animation branch
+    // Add the enemy sprites I think I want to break this out into a component? With a bunch of parts that we can call in different systems even at startup
+    let texture_handle = assest_server.load("darians-assests/Ball and Chain Bot/run.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
+    let mut rigid_body_set = RigidBodySet::new();
+    let rigid_body = RigidBodyBuilder::dynamic()
+        .translation(vector![0.5, 0.5])
+        .can_sleep(false)
+        .build();
+    let handle = rigid_body_set.insert(rigid_body);
+
+    let mut collider_set = ColliderSet::new();
+    let collider = ColliderBuilder::new(SharedShape::cuboid(0.5, 0.5))
+        .active_events(ActiveEvents::COLLISION_EVENTS)
+        .build();
+    collider_set.insert_with_parent(collider, handle, &mut rigid_body_set);
 
     // Add the player sprite
-    let sprite = SpriteBundle {
-        material: materials.bullet_material.clone(),
-        sprite: Sprite::new(Vec2::new(10., 10.)),
+    let sprite = SpriteSheetBundle {
+        texture_atlas: texture_atlas_handle.clone(),
+        transform: Transform {
+            scale: Vec3::new(PLAYER_SPRITE_SCALE, PLAYER_SPRITE_SCALE, 1.),
+            //translation: Vec3::new( 200., 200., 0.),
+            translation: Vec3::new(0.0, 0.0, 0.1),
+            ..Default::default()
+        },
         ..Default::default()
     };
 
     cmds.spawn_bundle(sprite)
-        .insert_bundle(rigid_body)
-        .insert_bundle(collider)
-        .insert(RigidBodyPositionSync::Discrete)
+        .insert(handle)
         .insert(Player { speed: 1.5 })
+        .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
+        .insert(RangedWeapon {
+            ..Default::default()
+        });
 }
 
 fn player_move_system(
-    mut players: Query<(&mut Player, &mut RigidBodyVelocity)>,
+    mut players: Query<(Entity, &Velocity, Player)>,
 
     controller: Option<Res<Controller>>,
     axes: Res<Axis<GamepadAxis>>,
@@ -75,8 +89,8 @@ fn player_move_system(
     let mut player_vel = Vec2::new(0.0, 0.0);
 
     if let Some(controller) = controller {
-        let axis_lx = GamepadAxis(controller.0, GamepadAxisType::LeftStickX);
-        let axis_ly = GamepadAxis(controller.0, GamepadAxisType::LeftStickY);
+        let axis_lx = GamepadAxis::new(controller.0, GamepadAxisType::LeftStickX);
+        let axis_ly = GamepadAxis::new(controller.0, GamepadAxisType::LeftStickY);
 
         if let (Some(x), Some(y)) = (axes.get(axis_lx), axes.get(axis_ly)) {
             player_vel.x = x;
@@ -99,8 +113,8 @@ fn player_move_system(
         }
     }
 
-    for (mut player, mut velocity, mut position) in players.iter_mut() {
-        velocity.linvel = player_vel.into();
+    for (mut player, mut velocity, player) in players.get_single_mut() {
+        velocity.linvel = player.0 * player_vel.into();
     }
 }
 
@@ -109,10 +123,9 @@ fn player_fire_aim_system(
     time: Res<Time>,
     mut blaster_heat: ResMut<BlasterHeat>,
 
-    //Why the with player? Check the tutorial
-    mut players: Query<(&mut Player, &mut RigidBodyPosition), With<Player>>,
+    player: Query<(Entity, &Transform), With<Player>>,
 
-    mut send_fire_event: EventWriter<BulletFiredEvent>,
+    mut send_fire_event: EventWriter<BlasterFiredEvent>,
 
     controller: Option<Res<Controller>>,
     axes: Res<Axis<GamepadAxis>>,
@@ -122,8 +135,8 @@ fn player_fire_aim_system(
     win_size: Res<WindowSize>,
     windows: Res<Windows>,
 ) {
+    let (player, player_tf) = player.get_single().unwrap();
     let mut weapon_dir = Vec2::new(0.0, 0.0);
-
     let window = windows.get_primary().unwrap();
 
     if let Some(cursor) = window.cursor_position() {
@@ -132,12 +145,13 @@ fn player_fire_aim_system(
             cursor.y - win_size.h / 2.0 - player_tf.translation.y,
         );
     }
+
     if let Some(controller) = controller {
-        let normal_fire_button = GamepadButton(controller.0, GamepadButtonType::LeftTrigger);
+        let normal_fire_button = GamepadButton::new(controller.0, GamepadButtonType::LeftTrigger);
         weapon_data.firing = buttons.pressed(normal_fire_button);
 
-        let axis_rx = GamepadAxis(controller.0, GamepadAxisType::RightStickX);
-        let axis_ry = GamepadAxis(controller.0, GamepadAxisType::RightStickY);
+        let axis_rx = GamepadAxis::new(controller.0, GamepadAxisType::RightStickX);
+        let axis_ry = GamepadAxis::new(controller.0, GamepadAxisType::RightStickY);
         if let (Some(x), Some(y)) = (axes.get(axis_rx), axes.get(axis_ry)) {
             if x.abs() > 0.2 || y.abs() > 0.2 {
                 weapon_dir = Vec2::new(x, y);

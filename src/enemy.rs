@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::sprite::collide_aabb::collide;
 use bevy::utils::HashMap;
 use bevy_rapier2d::prelude::*;
 use rand::Rng;
@@ -33,27 +32,20 @@ impl Plugin for EnemyPlugin {
 }
 
 pub fn spawn_crab(cmds: &mut Commands, position: Vec2, texture: Handle<Image>) {
-    let rigid_body = RigidBodyBundle {
-        position: position,
-        activation: RigidBodyActivation::cannot_sleep(),
-        forces: RigidBodyForce {
-            gravity_scale: 0.,
+    //Ripped my own code from the animation branch
+    // Add the enemy sprites I think I want to break this out into a component? With a bunch of parts that we can call in different systems even at startup
+    let texture_handle = assest_server.load("darians-assests/Ball and Chain Bot/run.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
+    let sprite = SpriteSheetBundle {
+        texture_atlas: texture_atlas_handle.clone(),
+        transform: Transform {
+            scale: Vec3::new(ENEMY_SPRITE_SCALE, ENEMY_SPRITE_SCALE, 1.),
+            //translation: Vec3::new( 200., 200., 0.),
+            translation: Vec3::new(0.0, 0.0, 0.1),
             ..Default::default()
         },
-        ..Default::default()
-    };
-
-    let collider = ColliderBundle {
-        shape: ColliderShape::rectangle(50., 50., 0),
-        flags: ColliderFlags {
-            active_events: ActiveEvents::CONTACT_EVENTS,
-            ..Default::default()
-        },
-    };
-
-    let sprite = SpriteBundle {
-        material: materials.bullet_material.clone(),
-        sprite: Sprite::new(Vec2::new(10., 10.)),
         ..Default::default()
     };
 

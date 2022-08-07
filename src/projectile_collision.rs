@@ -1,19 +1,10 @@
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
-use bevy_rapier2d::prelude::RigidBodyPosition;
+use bevy_rapier2d::prelude::*;
 
 use crate::components::{Enemy, FromPlayer, Moveable, Player, Projectile, Size, Velocity};
 use crate::states::GameState;
 pub struct CollisionPlugin;
-
-impl Plugin for CollisionPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_update(GameState::MainGame)
-                .with_system(projectile_collision_and_score_system),
-        );
-    }
-}
 
 pub struct LivingBeing;
 
@@ -26,7 +17,7 @@ pub struct LivingBeingDeathEvent {
 }
 
 pub fn on_living_being_hit(
-    mut living_being_death_events: EventReader<LivingBeingHitEvent>,
+    mut living_being_hit_events: EventReader<LivingBeingHitEvent>,
     mut send_living_being_death: EventWriter<LivingBeingDeathEvent>,
 ) {
     for event in living_being_hit_events.iter() {

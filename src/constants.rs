@@ -1,4 +1,6 @@
 pub const SPRITE_SCALE: f32 = 0.2;
+pub const PLAYER_SPRITE_SCALE: f32 = 0.2;
+pub const ENEMY_SPRITE_SCALE: f32 = 0.2;
 pub const BASE_SPEED: f32 = 200.;
 pub const TIME_STEP: f32 = 1. / 60.;
 pub const BLASTER_SHOT_HEAT_ADDITION: f32 = 5.;

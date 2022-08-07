@@ -1,15 +1,6 @@
 use crate::utils::CooldownTimer;
 use bevy::prelude::*;
 
-#[derive(Component, Deref, DerefMut)]
-pub struct Velocity(pub Vec2);
-
-impl From<Vec2> for Velocity {
-    fn from(vec2: Vec2) -> Self {
-        Self(vec2)
-    }
-}
-
 #[derive(Component)]
 pub struct Moveable {
     pub speed_multiplier: f32,
@@ -26,7 +17,9 @@ impl Default for Moveable {
 }
 
 #[derive(Component)]
-pub struct Player;
+pub struct Player {
+    pub speed: f32,
+}
 
 #[derive(Component)]
 pub struct FromPlayer;
@@ -73,3 +66,6 @@ pub struct Health(pub u32);
 
 #[derive(Component)]
 pub struct AreaOfEffect(pub bool);
+
+#[derive(Component, Deref, DerefMut)]
+pub struct AnimationTimer(pub Timer);

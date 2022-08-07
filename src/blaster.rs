@@ -49,7 +49,6 @@ pub fn insert_bullet_at(commands: &mut Commands, options: &BulletFiredEvent) {
     };
 
     let sprite = SpriteBundle {
-        material: materials.bullet_material.clone(),
         sprite: Sprite::new(Vec2::new(10., 10.)),
         ..Default::default()
     };
