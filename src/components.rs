@@ -39,13 +39,14 @@ pub struct Projectile {
 }
 
 #[derive(Component)]
-pub struct RangedWeapon {
+pub struct WeaponData {
     pub aim_direction: Vec2,
     pub firing: bool,
     pub fire_rate_timer: CooldownTimer,
 }
 
-impl Default for RangedWeapon {
+//Default is qwark's ranged weapon
+impl Default for WeaponData {
     fn default() -> Self {
         Self {
             aim_direction: Default::default(),

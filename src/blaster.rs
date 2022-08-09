@@ -13,14 +13,14 @@ pub struct BlasterFiredEvent {
 
 pub fn on_blaster_fired(
     mut commands: Commands,
-    mut bullet_fired_events: EventReader<BulletFiredEvent>,
+    mut bullet_fired_events: EventReader<BlasterFiredEvent>,
 ) {
     for event in bullet_fired_events.iter() {
         insert_bullet_at(&mut commands, event)
     }
 }
 
-pub fn insert_bullet_at(commands: &mut Commands, options: &BulletFiredEvent) {
+pub fn insert_bullet_at(commands: &mut Commands, options: &BlasterFiredEvent) {
     let speed = options.direction;
 
     let rigid_body = RigidBodyBundle {

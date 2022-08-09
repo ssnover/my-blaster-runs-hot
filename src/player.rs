@@ -1,10 +1,9 @@
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::Velocity;
-use bevy_rapier2d::rapier::prelude::*;
+use bevy_rapier2d::prelude::*;
 use nalgebra::{vector, Vector2};
 
 use crate::blaster::BlasterFiredEvent;
-use crate::components::{AnimationTimer, Moveable, Player, Projectile, RangedWeapon, Size};
+use crate::components::{AnimationTimer, Moveable, Player, Projectile, Size, WeaponData};
 use crate::constants::*;
 use crate::debug;
 use crate::projectile_collision::{LivingBeingDeathEvent, LivingBeingHitEvent};
@@ -43,19 +42,6 @@ fn player_spawn_system(
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
-    let mut rigid_body_set = RigidBodySet::new();
-    let rigid_body = RigidBodyBuilder::dynamic()
-        .translation(vector![0.5, 0.5])
-        .can_sleep(false)
-        .build();
-    let handle = rigid_body_set.insert(rigid_body);
-
-    let mut collider_set = ColliderSet::new();
-    let collider = ColliderBuilder::new(SharedShape::cuboid(0.5, 0.5))
-        .active_events(ActiveEvents::COLLISION_EVENTS)
-        .build();
-    collider_set.insert_with_parent(collider, handle, &mut rigid_body_set);
-
     // Add the player sprite
     let sprite = SpriteSheetBundle {
         texture_atlas: texture_atlas_handle.clone(),
@@ -68,17 +54,29 @@ fn player_spawn_system(
         ..Default::default()
     };
 
-    cmds.spawn_bundle(sprite)
-        .insert(handle)
+    // .spawn()
+    // .insert_bundle(body)
+    // .insert_bundle(sprite_bundle)
+    // .with_children(|builder| {
+    //     builder.spawn_bundle(collider)
+    //            .insert(ColliderPositionSync::Discrete);
+    // })
+    // .insert(RigidBodyPositionSync::Discrete);
+
+    cmds.spawn()
+        .insert_bundle(sprite)
+        .insert(RigidBody::Dynamic)
+        .insert(Velocity::zero())
+        .insert(Collider::cuboid(50.0, 50.0))
         .insert(Player { speed: 1.5 })
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
-        .insert(RangedWeapon {
+        .insert(WeaponData {
             ..Default::default()
         });
 }
 
 fn player_move_system(
-    mut players: Query<(Entity, &Velocity, Player)>,
+    mut players: Query<(Entity, &Velocity, &Player)>,
 
     controller: Option<Res<Controller>>,
     axes: Res<Axis<GamepadAxis>>,
@@ -113,8 +111,8 @@ fn player_move_system(
         }
     }
 
-    for (mut player, mut velocity, player) in players.get_single_mut() {
-        velocity.linvel = player.0 * player_vel.into();
+    for (mut player_entity, mut velocity, player) in players.get_single_mut() {
+        velocity.linvel = player.speed * player_vel.into();
     }
 }
 
@@ -123,7 +121,7 @@ fn player_fire_aim_system(
     time: Res<Time>,
     mut blaster_heat: ResMut<BlasterHeat>,
 
-    player: Query<(Entity, &Transform), With<Player>>,
+    player: Query<(Entity, &Transform, &mut WeaponData), With<Player>>,
 
     mut send_fire_event: EventWriter<BlasterFiredEvent>,
 
@@ -135,7 +133,7 @@ fn player_fire_aim_system(
     win_size: Res<WindowSize>,
     windows: Res<Windows>,
 ) {
-    let (player, player_tf) = player.get_single().unwrap();
+    let (player, player_tf, mut weapon) = player.get_single_mut().unwrap();
     let mut weapon_dir = Vec2::new(0.0, 0.0);
     let window = windows.get_primary().unwrap();
 
@@ -148,7 +146,7 @@ fn player_fire_aim_system(
 
     if let Some(controller) = controller {
         let normal_fire_button = GamepadButton::new(controller.0, GamepadButtonType::LeftTrigger);
-        weapon_data.firing = buttons.pressed(normal_fire_button);
+        weapon.firing = buttons.pressed(normal_fire_button);
 
         let axis_rx = GamepadAxis::new(controller.0, GamepadAxisType::RightStickX);
         let axis_ry = GamepadAxis::new(controller.0, GamepadAxisType::RightStickY);
@@ -159,7 +157,7 @@ fn player_fire_aim_system(
         }
     }
 
-    weapon_data.fire_rate_timer.tick(time.delta());
+    weapon.fire_rate_timer.tick(time.delta());
     blaster_heat.overheat_cooldown_timer.tick(time.delta());
     blaster_heat.value =
         0f32.max(blaster_heat.value - (time.delta_seconds() * BLASTER_COOLOFF_MULTIPLIER));
@@ -168,17 +166,17 @@ fn player_fire_aim_system(
         blaster_heat.overheat_cooldown_timer.trigger();
     }
 
-    if weapon_data.firing
-        && weapon_data.fire_rate_timer.ready()
+    if weapon.firing
+        && weapon.fire_rate_timer.ready()
         && blaster_heat.overheat_cooldown_timer.ready()
     {
-        weapon_data.fire_rate_timer.trigger();
+        weapon.fire_rate_timer.trigger();
         blaster_heat.value += BLASTER_SHOT_HEAT_ADDITION;
         println!("Blaster Temp: {} C", blaster_heat.value);
         blaster::create_blaster_shot(
             &mut cmds,
             tf.translation,
-            weapon_data.aim_direction,
+            weapon.aim_direction,
             Color::rgb_u8(240, 0, 15),
             true,
         );
