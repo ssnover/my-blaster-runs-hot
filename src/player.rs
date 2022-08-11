@@ -6,7 +6,7 @@ use crate::blaster::BlasterFiredEvent;
 use crate::components::{AnimationTimer, Moveable, Player, Projectile, Size, WeaponData};
 use crate::constants::*;
 use crate::debug;
-use crate::projectile_collision::{LivingBeingDeathEvent, LivingBeingHitEvent};
+use crate::projectile_collision::{LivingBeing, LivingBeingDeathEvent, LivingBeingHitEvent};
 use crate::resources::{BlasterHeat, Controller, GameTextures, WindowSize};
 use crate::states::GameState;
 use crate::utils::CooldownTimer;
@@ -30,8 +30,6 @@ impl Plugin for PlayerPlugin {
 
 fn player_spawn_system(
     mut cmds: Commands,
-    game_textures: Res<GameTextures>,
-    win_size: Res<WindowSize>,
 
     assest_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
@@ -68,8 +66,10 @@ fn player_spawn_system(
         .insert(RigidBody::Dynamic)
         .insert(Velocity::zero())
         .insert(Collider::cuboid(50.0, 50.0))
+        .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(Player { speed: 1.5 })
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
+        .insert(LivingBeing)
         .insert(WeaponData {
             ..Default::default()
         });
@@ -112,7 +112,7 @@ fn player_move_system(
     }
 
     for (mut player_entity, mut velocity, player) in players.get_single_mut() {
-        velocity.linvel = player.speed * player_vel.into();
+        velocity.linvel = player.speed * player_vel;
     }
 }
 
@@ -173,12 +173,13 @@ fn player_fire_aim_system(
         weapon.fire_rate_timer.trigger();
         blaster_heat.value += BLASTER_SHOT_HEAT_ADDITION;
         println!("Blaster Temp: {} C", blaster_heat.value);
-        blaster::create_blaster_shot(
-            &mut cmds,
-            tf.translation,
-            weapon.aim_direction,
-            Color::rgb_u8(240, 0, 15),
-            true,
-        );
+        //Replace this with a blaster creation event
+        // blaster::create_blaster_shot(
+        //     &mut cmds,
+        //     player_tf.translation,
+        //     weapon.aim_direction,
+        //     Color::rgb_u8(240, 0, 15),
+        //     true,
+        // );
     }
 }

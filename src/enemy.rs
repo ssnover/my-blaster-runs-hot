@@ -8,9 +8,10 @@ use crate::components::{
     Velocity,
 };
 use crate::constants::{
-    BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, PLAYER_ATTRACTION_FORCE,
-    SPRITE_SCALE, TIME_STEP,
+    BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPRITE_SCALE,
+    PLAYER_ATTRACTION_FORCE, SPRITE_SCALE, TIME_STEP,
 };
+use crate::projectile_collision::LivingBeing;
 use crate::resources::{GameTextures, WindowSize};
 use crate::states::GameState;
 use crate::utils::{normalize_vec2, CooldownTimer};
@@ -31,7 +32,13 @@ impl Plugin for EnemyPlugin {
     }
 }
 
-pub fn spawn_crab(cmds: &mut Commands, position: Vec2, texture: Handle<Image>) {
+pub fn spawn_crab(
+    cmds: &mut Commands,
+    position: Vec2,
+
+    assest_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
     //Ripped my own code from the animation branch
     // Add the enemy sprites I think I want to break this out into a component? With a bunch of parts that we can call in different systems even at startup
     let texture_handle = assest_server.load("darians-assests/Ball and Chain Bot/run.png");
@@ -50,11 +57,12 @@ pub fn spawn_crab(cmds: &mut Commands, position: Vec2, texture: Handle<Image>) {
     };
 
     cmds.spawn_bundle(sprite)
-        .insert_bundle(rigid_body)
-        .insert_bundle(collider)
-        .insert(RigidBodyPositionSync::Discrete)
+        .insert(RigidBody::Dynamic)
+        .insert(Velocity::zero())
+        .insert(Collider::cuboid(50.0, 50.0))
+        .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(LivingBeing)
-        .insert(Enemy)
+        .insert(Enemy);
 }
 
 fn enemy_spawn_system(

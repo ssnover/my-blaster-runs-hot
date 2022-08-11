@@ -34,6 +34,9 @@ pub struct Enemy;
 pub struct Civilian;
 
 #[derive(Component)]
+pub struct Blaster;
+
+#[derive(Component)]
 pub struct Projectile {
     pub from_player: bool,
 }

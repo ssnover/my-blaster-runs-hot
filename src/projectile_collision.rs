@@ -2,10 +2,11 @@ use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use bevy_rapier2d::prelude::*;
 
-use crate::components::{Enemy, FromPlayer, Moveable, Player, Projectile, Size, Velocity};
+use crate::components::{Enemy, FromPlayer, Moveable, Player, Projectile, Size};
 use crate::states::GameState;
 pub struct CollisionPlugin;
 
+#[derive(Component)]
 pub struct LivingBeing;
 
 pub struct LivingBeingHitEvent {
