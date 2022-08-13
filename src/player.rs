@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
+use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use nalgebra::{vector, Vector2};
 
 use crate::blaster::BlasterFiredEvent;
-use crate::components::{AnimationTimer, Moveable, Player, Projectile, Size, WeaponData};
+use crate::components::{AnimationTimer, Enemy, Lives, Player, Projectile, WeaponData};
 use crate::constants::*;
 use crate::debug;
 use crate::projectile_collision::{LivingBeing, LivingBeingDeathEvent, LivingBeingHitEvent};
@@ -31,12 +32,12 @@ impl Plugin for PlayerPlugin {
 fn player_spawn_system(
     mut cmds: Commands,
 
-    assest_server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     //Ripped my own code from the animation branch
     // Add the enemy sprites I think I want to break this out into a component? With a bunch of parts that we can call in different systems even at startup
-    let texture_handle = assest_server.load("darians-assests/Ball and Chain Bot/run.png");
+    let texture_handle = asset_server.load("darians-assests/Ball and Chain Bot/run.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
@@ -70,6 +71,7 @@ fn player_spawn_system(
         .insert(Player { speed: 1.5 })
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
         .insert(LivingBeing)
+        .insert(Lives { lives_num: 5 })
         .insert(WeaponData {
             ..Default::default()
         });
@@ -181,5 +183,35 @@ fn player_fire_aim_system(
             from_player: true,
         };
         send_fire_event.send(event);
+    }
+}
+
+pub fn collision_with_enemy(
+    mut send_player_hit: EventWriter<LivingBeingHitEvent>,
+    player_query: Query<(Entity, &Lives), With<Player>>,
+    enemy_query: Query<Entity, With<Enemy>>,
+    mut collision_events: EventReader<CollisionEvent>,
+) {
+    for event in collision_events.iter() {
+        match event {
+            CollisionEvent::Started(first, second, flags) => {
+                let first = *first;
+                let second = *second;
+
+                if flags == &CollisionEventFlags::empty() {
+                    for (player, lives) in player_query.iter() {
+                        for (enemy) in enemy_query.iter() {
+                            if ((first == player) ^ (second == player)) {
+                                if ((first == enemy) ^ (second == enemy)) {
+                                    //send_player_hit.send(LivingBeingHitEvent { entity: player });
+                                    lives.lives_num.saturating_sub(1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 }

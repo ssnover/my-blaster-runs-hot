@@ -1,8 +1,12 @@
+use bevy::ecs::event::Event;
 use bevy::prelude::*;
-use bevy::sprite::collide_aabb::collide;
+use bevy_rapier2d::prelude::*;
+use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use rand::Rng;
 
-use crate::components::{Civilian, Moveable, Player, Size, Velocity};
+use crate::components::{AnimationTimer, Civilian, Player};
+use crate::constants::PLAYER_SPRITE_SCALE;
+use crate::projectile_collision::{LivingBeing, LivingBeingHitEvent};
 use crate::resources::{PlayerScore, WindowSize};
 use crate::states::GameState;
 
@@ -18,29 +22,47 @@ impl Plugin for CivilianPlugin {
     }
 }
 
-pub fn spawn_civilian(cmds: &mut Commands, position: Vec2) {
-    cmds.spawn_bundle(SpriteBundle {
-        sprite: Sprite {
-            color: Color::rgb_u8(40, 240, 40),
-            custom_size: Some(Vec2::new(20., 20.)),
-            ..Default::default()
-        },
+pub fn spawn_civilian(
+    cmds: &mut Commands,
+    position: Vec2,
+    assest_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
+    //Ripped my own code from the animation branch
+    // Add the enemy sprites I think I want to break this out into a component? With a bunch of parts that we can call in different systems even at startup
+    let texture_handle = assest_server.load("darians-assests/Ball and Chain Bot/run.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
+    // Add the player sprite
+    let sprite = SpriteSheetBundle {
+        texture_atlas: texture_atlas_handle.clone(),
         transform: Transform {
-            translation: Vec3::new(position.x, position.y, 1.0),
+            scale: Vec3::new(PLAYER_SPRITE_SCALE, PLAYER_SPRITE_SCALE, 1.),
+            //translation: Vec3::new( 200., 200., 0.),
+            translation: Vec3::new(0.0, 0.0, 0.1),
             ..Default::default()
         },
         ..Default::default()
-    })
-    .insert(Civilian)
-    .insert(Velocity(Vec2::new(0., 0.)))
-    .insert(Moveable {
-        solid: true,
-        speed_multiplier: 0.25,
-    })
-    .insert(Size(Vec2::new(20., 20.)));
+    };
+
+    cmds.spawn()
+        .insert_bundle(sprite)
+        .insert(RigidBody::Dynamic)
+        .insert(Velocity::zero())
+        .insert(Collider::cuboid(50.0, 50.0))
+        .insert(ActiveEvents::COLLISION_EVENTS)
+        .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
+        .insert(LivingBeing)
+        .insert(Civilian);
 }
 
-fn spawn_civilian_system(mut cmds: Commands, win_size: Res<WindowSize>) {
+fn spawn_civilian_system(
+    mut cmds: Commands,
+    win_size: Res<WindowSize>,
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
     let mut rng = rand::thread_rng();
     let num_civilians = 5;
 
@@ -51,6 +73,8 @@ fn spawn_civilian_system(mut cmds: Commands, win_size: Res<WindowSize>) {
                 rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
                 rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
             ),
+            asset_server,
+            texture_atlases,
         );
     }
 }
@@ -66,30 +90,47 @@ fn civilian_ai_system(
             player_tf.translation.x - civ_tf.translation.x,
             player_tf.translation.y - civ_tf.translation.y,
         );
-        *civ_velocity = Velocity(position_diff);
+        civ_velocity.linvel = position_diff;
     }
 }
 
 fn civilian_despawn_system(
     mut cmds: Commands,
-    civilian_query: Query<(Entity, &Transform, &Size), With<Civilian>>,
-    player_query: Query<(&Transform, &Size), With<Player>>,
+    mut send_civillian_hit: EventWriter<LivingBeingHitEvent>,
+    civilian_query: Query<Entity, With<Civilian>>,
+    player_query: Query<Entity, With<Player>>,
     mut score: ResMut<PlayerScore>,
+    mut contact_events: EventReader<CollisionEvent>,
 ) {
-    let (player_tf, player_size) = player_query.get_single().unwrap();
+    let player = player_query.get_single().unwrap();
+    for event in contact_events.iter() {
+        match event {
+            CollisionEvent::Started(first, second, flags) => {
+                let first = *first;
+                let second = *second;
 
-    for (entity, tf, civilian_size) in civilian_query.iter() {
-        let collision = collide(
-            player_tf.translation,
-            player_size.0,
-            tf.translation,
-            civilian_size.0,
-        );
-        if collision.is_some() {
-            // Rescued this civilian!
-            score.0 += 100;
-            cmds.entity(entity).despawn_recursive();
-            println!("Current Score: {}", score.0);
+                if flags == &CollisionEventFlags::empty() {
+                    for (civillian) in civilian_query.iter() {
+                        //I think this will work because there is only 1 player, I guess this would work with more than 1 player
+                        if ((first == player) ^ (second == player)) {
+                            if ((first == civillian) ^ (second == civillian)) {
+                                cmds.entity(civillian).despawn_recursive();
+                                score.0 += 100;
+                                println!("Current Score: {}", score.0);
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
         }
     }
+
+    //     if collision.is_some() {
+    //         // Rescued this civilian!
+    //         score.0 += 100;
+    //         cmds.entity(entity).despawn_recursive();
+    //         println!("Current Score: {}", score.0);
+    //     }
+    // }
 }

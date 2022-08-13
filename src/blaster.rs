@@ -4,7 +4,7 @@ use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use bevy_rapier2d::{prelude::*, rapier::prelude::Translation};
 use nalgebra::MatrixSliceMut1x3;
 
-use crate::components::{AreaOfEffect, Blaster, FromEnemy, FromPlayer, Moveable, Projectile, Size};
+use crate::components::{AreaOfEffect, Blaster, FromEnemy, FromPlayer, Projectile};
 use crate::projectile_collision::{LivingBeing, LivingBeingHitEvent};
 
 pub struct BlasterFiredEvent {
@@ -72,6 +72,8 @@ pub fn destroy_blaster_on_contact(
     }
 }
 
+//WOULD HAVE TO SEND DAMAGE AND LIVES IN THE EVENT SEND
+//DAMAGE SHOULD BE IN WEAPON DATA
 pub fn damage_on_contact(
     mut commands: Commands,
     mut send_living_being_hit: EventWriter<LivingBeingHitEvent>,

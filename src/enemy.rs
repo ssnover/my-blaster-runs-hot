@@ -4,9 +4,7 @@ use bevy_rapier2d::prelude::*;
 use rand::Rng;
 
 use crate::blaster::BlasterFiredEvent;
-use crate::components::{
-    AreaOfEffect, Enemy, FromPlayer, Health, Moveable, Player, Projectile, Size, WeaponData,
-};
+use crate::components::{AreaOfEffect, Enemy, FromPlayer, Health, Player, Projectile, WeaponData};
 use crate::constants::{
     BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPRITE_SCALE,
     PLAYER_ATTRACTION_FORCE, SPRITE_SCALE, TIME_STEP,
@@ -36,12 +34,12 @@ pub fn spawn_crab(
     cmds: &mut Commands,
     position: Vec2,
 
-    assest_server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     //Ripped my own code from the animation branch
     // Add the enemy sprites I think I want to break this out into a component? With a bunch of parts that we can call in different systems even at startup
-    let texture_handle = assest_server.load("darians-assests/Ball and Chain Bot/run.png");
+    let texture_handle = asset_server.load("darians-assests/Ball and Chain Bot/run.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
@@ -67,7 +65,7 @@ pub fn spawn_crab(
 
 fn enemy_spawn_system(
     mut cmds: Commands,
-    assest_server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     win_size: Res<WindowSize>,
 ) {
@@ -81,7 +79,7 @@ fn enemy_spawn_system(
                 rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
                 rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
             ),
-            assest_server,
+            asset_server,
             texture_atlases,
         );
     }

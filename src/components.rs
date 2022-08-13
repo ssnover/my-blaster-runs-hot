@@ -2,21 +2,6 @@ use crate::utils::CooldownTimer;
 use bevy::prelude::*;
 
 #[derive(Component)]
-pub struct Moveable {
-    pub speed_multiplier: f32,
-    pub solid: bool,
-}
-
-impl Default for Moveable {
-    fn default() -> Self {
-        Moveable {
-            speed_multiplier: 1.0,
-            solid: true,
-        }
-    }
-}
-
-#[derive(Component)]
 pub struct Player {
     pub speed: f32,
 }
@@ -42,6 +27,11 @@ pub struct Projectile {
 }
 
 #[derive(Component)]
+pub struct Lives {
+    pub lives_num: u8,
+}
+
+#[derive(Component)]
 pub struct WeaponData {
     pub aim_direction: Vec2,
     pub firing: bool,
@@ -58,9 +48,6 @@ impl Default for WeaponData {
         }
     }
 }
-
-#[derive(Component)]
-pub struct Size(pub Vec2);
 
 #[derive(Component)]
 pub struct ScoreUi;

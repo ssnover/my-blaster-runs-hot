@@ -33,6 +33,9 @@ fn spawn_manager_system(
     win_size: Res<WindowSize>,
     game_textures: Res<GameTextures>,
     query: Query<(), Or<(With<Civilian>, With<Enemy>)>>,
+
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let current_max_spawns = round_tracker.current_round_data().unwrap().max_spawns as usize;
     let number_of_spawns = query.iter().count();
@@ -46,9 +49,11 @@ fn spawn_manager_system(
                 rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
             );
             match spawn_queue.pop_front() {
-                Some(SpawnType::Civilian) => spawn_civilian(&mut cmds, spawn_position),
+                Some(SpawnType::Civilian) => {
+                    spawn_civilian(&mut cmds, spawn_position, asset_server, texture_atlases)
+                }
                 Some(SpawnType::Crab) => {
-                    spawn_crab(&mut cmds, spawn_position, game_textures.enemy.clone())
+                    spawn_crab(&mut cmds, spawn_position, asset_server, texture_atlases)
                 }
                 _ => {}
             }

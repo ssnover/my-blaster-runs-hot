@@ -16,7 +16,7 @@ impl Plugin for UiPlugin {
 }
 
 fn spawn_ui_system(mut cmds: Commands, score: Res<PlayerScore>, font: Res<GameFont>) {
-    cmds.spawn_bundle(UiCameraBundle::default());
+    cmds.spawn_bundle(Camera2dBundle::default());
     cmds.spawn_bundle(TextBundle {
         style: Style {
             align_self: AlignSelf::FlexEnd,

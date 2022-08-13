@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use bevy_rapier2d::prelude::*;
 
-use crate::components::{Enemy, FromPlayer, Moveable, Player, Projectile, Size};
+use crate::components::{Enemy, FromPlayer, Player, Projectile};
 use crate::states::GameState;
 pub struct CollisionPlugin;
 
@@ -13,6 +13,7 @@ pub struct LivingBeingHitEvent {
     pub entity: Entity,
 }
 
+//MAYBE REWRITE THIS TO TAKE DAMAGE, HEALTH AND LIVES
 pub struct LivingBeingDeathEvent {
     pub entity: Entity,
 }
@@ -28,6 +29,8 @@ pub fn on_living_being_hit(
     }
 }
 
+//REWRITE THIS TO JUST DECREMENT LIVES IF LIVES 0 THEN DESPAWN
+//MAYBE SEND A SPECIAL DEATH EVENT FOR PLAYERS SO I CAN INITIALIZE I-FRAME SEQUENCE
 pub fn on_living_being_dead(
     mut living_being_death_events: EventReader<LivingBeingDeathEvent>,
     mut commands: Commands,
