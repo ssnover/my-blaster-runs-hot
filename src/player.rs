@@ -173,13 +173,13 @@ fn player_fire_aim_system(
         weapon.fire_rate_timer.trigger();
         blaster_heat.value += BLASTER_SHOT_HEAT_ADDITION;
         println!("Blaster Temp: {} C", blaster_heat.value);
-        //Replace this with a blaster creation event
-        // blaster::create_blaster_shot(
-        //     &mut cmds,
-        //     player_tf.translation,
-        //     weapon.aim_direction,
-        //     Color::rgb_u8(240, 0, 15),
-        //     true,
-        // );
+
+        let event = BlasterFiredEvent {
+            position: Vec2::new(player_tf.translation.x, player_tf.translation.y),
+            direction: weapon.aim_direction,
+            speed: 1.5,
+            from_player: true,
+        };
+        send_fire_event.send(event);
     }
 }

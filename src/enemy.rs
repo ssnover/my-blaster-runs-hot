@@ -3,9 +3,9 @@ use bevy::utils::HashMap;
 use bevy_rapier2d::prelude::*;
 use rand::Rng;
 
+use crate::blaster::BlasterFiredEvent;
 use crate::components::{
-    AreaOfEffect, Enemy, FromPlayer, Health, Moveable, Player, Projectile, RangedWeapon, Size,
-    Velocity,
+    AreaOfEffect, Enemy, FromPlayer, Health, Moveable, Player, Projectile, Size, WeaponData,
 };
 use crate::constants::{
     BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPRITE_SCALE,
@@ -67,7 +67,8 @@ pub fn spawn_crab(
 
 fn enemy_spawn_system(
     mut cmds: Commands,
-    game_textures: Res<GameTextures>,
+    assest_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     win_size: Res<WindowSize>,
 ) {
     let mut rng = rand::thread_rng();
@@ -80,17 +81,18 @@ fn enemy_spawn_system(
                 rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
                 rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
             ),
-            game_textures.enemy.clone(),
+            assest_server,
+            texture_atlases,
         );
     }
 }
 
 fn enemy_ai_system(
     mut cmds: Commands,
-    mut enemy_query: Query<(&mut RigidBodyVelocity), With<Enemy>>,
-    player_query: Query<(&RigidBodyPosition), With<Player>>,
+    mut enemy_query: Query<(Entity, &Velocity, &Transform), With<Enemy>>,
+    player_query: Query<(&Transform), With<Player>>,
 ) {
-    let player_position = player_query.get_single().unwrap();
+    let player_tf = player_query.get_single().unwrap();
     let mut x_offset = 0.0;
     let mut y_offset = 0.0;
     let mut entity_counter = 0.;
@@ -126,13 +128,14 @@ fn enemy_ai_system(
             - ENEMY_REPULSION_FORCE * Vec2::new(x_offset, y_offset);
         x_offset = 0.0;
         y_offset = 0.0;
-        *enemy_vel = Velocity(total_vel);
+        enemy_vel.linvel = total_vel;
     }
 }
 
 fn enemy_blaster_system(
     mut cmds: Commands,
-    mut enemy_query: Query<(Entity, &Transform, &mut RangedWeapon), With<Enemy>>,
+    mut enemy_query: Query<(Entity, &Transform, &mut WeaponData), With<Enemy>>,
+    mut send_fire_event: EventWriter<BlasterFiredEvent>,
     player_query: Query<(&Transform), With<Player>>,
     time: Res<Time>,
 ) {
@@ -149,13 +152,13 @@ fn enemy_blaster_system(
                 player_tf.translation.y - enemy_tf.translation.y,
             );
 
-            blaster::create_blaster_shot(
-                &mut cmds,
-                enemy_tf.translation,
-                enemy_weapon.aim_direction,
-                Color::rgb_u8(0, 0, 240),
-                false,
-            );
+            let event = BlasterFiredEvent {
+                position: Vec2::new(enemy_tf.translation.x, enemy_tf.translation.y),
+                direction: enemy_weapon.aim_direction,
+                speed: 1.5,
+                from_player: false,
+            };
+            send_fire_event.send(event);
         }
     }
 }
