@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use bevy::{prelude::*, render::texture::ImageSettings};
+use bevy_rapier2d::prelude::*;
 
 const QWARK_SPRITE: &str = "qwark.png";
 const QWARK_SIZE: (f32, f32) = (500., 500.);
@@ -45,10 +46,12 @@ fn main() {
             ..Default::default()
         })
         .insert_resource(ImageSettings::default_nearest()) //Prevents blurry images apparently
+        .add_plugins(DefaultPlugins)
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+        .add_plugin(RapierDebugRenderPlugin::default())
         .add_state(states::GameState::MainGame)
         //start plugins
         //.add_plugin(MainMenuPlugin)
-        .add_plugins(DefaultPlugins)
         //.add_plugin(civilian::CivilianPlugin)
         //.add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)

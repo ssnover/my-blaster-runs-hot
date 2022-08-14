@@ -24,7 +24,8 @@ impl Plugin for PlayerPlugin {
             .add_system_set(
                 SystemSet::on_update(GameState::MainGame)
                     .with_system(player_move_system)
-                    .with_system(player_fire_aim_system),
+                    .with_system(player_fire_aim_system)
+                    .with_system(debug_vel_system),
             );
     }
 }
@@ -34,7 +35,10 @@ fn player_spawn_system(
 
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut rapier_config: ResMut<RapierConfiguration>,
 ) {
+    rapier_config.gravity = Vec2::ZERO;
+
     let texture_handle = asset_server.load("darians-assets/Ball and Chain Bot/run.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
@@ -50,9 +54,9 @@ fn player_spawn_system(
         .insert_bundle(sprite)
         .insert(RigidBody::Dynamic)
         .insert(Velocity::zero())
-        .insert(Collider::cuboid(50.0, 50.0))
+        .insert(Collider::cuboid(10.0, 10.0))
         .insert(ActiveEvents::COLLISION_EVENTS)
-        .insert(Player { speed: 1.5 })
+        .insert(Player { speed: 100.0 })
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
         .insert(LivingBeing)
         .insert(Lives { lives_num: 5 })
@@ -98,7 +102,12 @@ fn player_move_system(
     }
 
     for (mut player_entity, mut velocity, player) in players.get_single_mut() {
-        velocity.linvel = player.speed * player_vel;
+        *velocity = Velocity::linear(player_vel * player.speed);
+    }
+}
+
+fn debug_vel_system(mut players: Query<(Entity, &mut Velocity, &Player)>) {
+    for (mut player_entity, mut velocity, player) in players.get_single_mut() {
         println!("linvel = {}", &velocity.linvel);
     }
 }
@@ -167,6 +176,7 @@ fn player_fire_aim_system(
             speed: 1.5,
             from_player: true,
         };
+        println!("trying to send event");
         send_fire_event.send(event);
     }
 }
