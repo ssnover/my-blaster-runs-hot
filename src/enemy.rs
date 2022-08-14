@@ -33,15 +33,10 @@ impl Plugin for EnemyPlugin {
 pub fn spawn_crab(
     cmds: &mut Commands,
     position: Vec2,
-
-    asset_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    texture_atlas_handle: &Handle<TextureAtlas>,
 ) {
     //Ripped my own code from the animation branch
     // Add the enemy sprites I think I want to break this out into a component? With a bunch of parts that we can call in different systems even at startup
-    let texture_handle = asset_server.load("darians-assests/Ball and Chain Bot/run.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
     let sprite = SpriteSheetBundle {
         texture_atlas: texture_atlas_handle.clone(),
@@ -71,6 +66,10 @@ fn enemy_spawn_system(
 ) {
     let mut rng = rand::thread_rng();
 
+    let texture_handle = asset_server.load("darians-assets/Ball and Chain Bot/run.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
     // Add the enemy
     for i in 0..3 {
         spawn_crab(
@@ -79,15 +78,14 @@ fn enemy_spawn_system(
                 rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
                 rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
             ),
-            asset_server,
-            texture_atlases,
+            &texture_atlas_handle,
         );
     }
 }
 
 fn enemy_ai_system(
     mut cmds: Commands,
-    mut enemy_query: Query<(Entity, &Velocity, &Transform), With<Enemy>>,
+    mut enemy_query: Query<(Entity, &mut Velocity, &Transform), With<Enemy>>,
     player_query: Query<(&Transform), With<Player>>,
 ) {
     let player_tf = player_query.get_single().unwrap();

@@ -19,11 +19,11 @@ pub fn on_blaster_fired(
     mut bullet_fired_events: EventReader<BlasterFiredEvent>,
 ) {
     for event in bullet_fired_events.iter() {
-        insert_blaster_at(commands, event)
+        insert_blaster_at(&mut commands, event)
     }
 }
 
-pub fn insert_blaster_at(mut cmds: Commands, options: &BlasterFiredEvent) {
+pub fn insert_blaster_at(cmds: &mut Commands, options: &BlasterFiredEvent) {
     let speed = options.direction;
 
     let sprite = Sprite {

@@ -40,6 +40,16 @@ fn spawn_manager_system(
     let current_max_spawns = round_tracker.current_round_data().unwrap().max_spawns as usize;
     let number_of_spawns = query.iter().count();
 
+    let texture_handle_crab = asset_server.load("darians-assets/Ball and Chain Bot/run.png");
+    let texture_atlas_crab =
+        TextureAtlas::from_grid(texture_handle_crab, Vec2::new(126.0, 39.0), 1, 8);
+    let texture_atlas_handle_crab = texture_atlases.add(texture_atlas_crab);
+
+    let texture_handle_civ = asset_server.load("darians-assets/Ball and Chain Bot/run.png");
+    let texture_atlas_civ =
+        TextureAtlas::from_grid(texture_handle_civ, Vec2::new(126.0, 39.0), 1, 8);
+    let texture_atlas_handle_civ = texture_atlases.add(texture_atlas_civ);
+
     if current_max_spawns > number_of_spawns {
         let mut rng = rand::thread_rng();
         let diff = current_max_spawns - number_of_spawns;
@@ -50,10 +60,10 @@ fn spawn_manager_system(
             );
             match spawn_queue.pop_front() {
                 Some(SpawnType::Civilian) => {
-                    spawn_civilian(&mut cmds, spawn_position, asset_server, texture_atlases)
+                    spawn_civilian(&mut cmds, spawn_position, &texture_atlas_handle_crab)
                 }
                 Some(SpawnType::Crab) => {
-                    spawn_crab(&mut cmds, spawn_position, asset_server, texture_atlases)
+                    spawn_crab(&mut cmds, spawn_position, &texture_atlas_handle_civ)
                 }
                 _ => {}
             }

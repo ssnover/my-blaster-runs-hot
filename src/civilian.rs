@@ -15,9 +15,9 @@ pub struct CivilianPlugin;
 impl Plugin for CivilianPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::on_update(GameState::MainGame)
-                .with_system(civilian_ai_system)
-                .with_system(civilian_despawn_system),
+            SystemSet::on_update(GameState::MainGame).with_system(civilian_ai_system),
+            //
+            //.with_system(civilian_despawn_system),
         );
     }
 }
@@ -25,15 +25,8 @@ impl Plugin for CivilianPlugin {
 pub fn spawn_civilian(
     cmds: &mut Commands,
     position: Vec2,
-    assest_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    texture_atlas_handle: &Handle<TextureAtlas>,
 ) {
-    //Ripped my own code from the animation branch
-    // Add the enemy sprites I think I want to break this out into a component? With a bunch of parts that we can call in different systems even at startup
-    let texture_handle = assest_server.load("darians-assests/Ball and Chain Bot/run.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
-
     // Add the player sprite
     let sprite = SpriteSheetBundle {
         texture_atlas: texture_atlas_handle.clone(),
@@ -66,6 +59,10 @@ fn spawn_civilian_system(
     let mut rng = rand::thread_rng();
     let num_civilians = 5;
 
+    let texture_handle = asset_server.load("darians-assets/Ball and Chain Bot/run.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
     for _ in 0..num_civilians {
         spawn_civilian(
             &mut cmds,
@@ -73,8 +70,7 @@ fn spawn_civilian_system(
                 rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0),
                 rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0),
             ),
-            asset_server,
-            texture_atlases,
+            &texture_atlas_handle,
         );
     }
 }
