@@ -11,3 +11,6 @@ pub const COOLDOWN_TIME_SECONDS: f32 = 5.;
 pub const ENEMY_REPULSION_RADIUS: f32 = 10.0;
 pub const ENEMY_REPULSION_FORCE: f32 = 1.0;
 pub const PLAYER_ATTRACTION_FORCE: f32 = 3.0;
+pub const PLAYER_SPEED: f32 = 1.0;
+pub const ENEMY_SPEED: f32 = 1.0;
+pub const BLASTER_SPEED: f32 = 1.0;

@@ -25,7 +25,7 @@ impl Plugin for PlayerPlugin {
                 SystemSet::on_update(GameState::MainGame)
                     .with_system(player_move_system)
                     .with_system(player_fire_aim_system)
-                    .with_system(debug_vel_system),
+                    .with_system(collision_with_enemy),
             );
     }
 }
@@ -52,7 +52,7 @@ fn player_spawn_system(
 
     cmds.spawn()
         .insert_bundle(sprite)
-        .insert(RigidBody::Dynamic)
+        .insert(RigidBody::KinematicVelocityBased)
         .insert(Velocity::zero())
         .insert(Collider::cuboid(10.0, 10.0))
         .insert(ActiveEvents::COLLISION_EVENTS)
@@ -106,12 +106,6 @@ fn player_move_system(
     }
 }
 
-fn debug_vel_system(mut players: Query<(Entity, &mut Velocity, &Player)>) {
-    for (mut player_entity, mut velocity, player) in players.get_single_mut() {
-        println!("linvel = {}", &velocity.linvel);
-    }
-}
-
 fn player_fire_aim_system(
     mut cmds: Commands,
     time: Res<Time>,
@@ -139,6 +133,8 @@ fn player_fire_aim_system(
             cursor.y - win_size.h / 2.0 - player_tf.translation.y,
         );
     }
+
+    weapon.firing = mouse_buttons.pressed(MouseButton::Left);
 
     if let Some(controller) = controller {
         let normal_fire_button = GamepadButton::new(controller.0, GamepadButtonType::LeftTrigger);
@@ -172,11 +168,10 @@ fn player_fire_aim_system(
 
         let event = BlasterFiredEvent {
             position: Vec2::new(player_tf.translation.x, player_tf.translation.y),
-            direction: weapon.aim_direction,
-            speed: 1.5,
+            direction: weapon_dir,
             from_player: true,
         };
-        println!("trying to send event");
+        println!("weapon_dir: {}", weapon_dir);
         send_fire_event.send(event);
     }
 }

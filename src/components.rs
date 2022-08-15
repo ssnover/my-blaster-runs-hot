@@ -33,7 +33,7 @@ pub struct Lives {
 
 #[derive(Component)]
 pub struct WeaponData {
-    pub aim_direction: Vec2,
+    pub aim_direction: Vec2, //This seems fucking useless now
     pub firing: bool,
     pub fire_rate_timer: CooldownTimer,
 }
@@ -43,8 +43,8 @@ impl Default for WeaponData {
     fn default() -> Self {
         Self {
             aim_direction: Default::default(),
-            firing: Default::default(),
-            fire_rate_timer: CooldownTimer::from_seconds(1.),
+            firing: false,
+            fire_rate_timer: CooldownTimer::from_seconds(1.0),
         }
     }
 }

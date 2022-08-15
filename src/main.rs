@@ -56,6 +56,7 @@ fn main() {
         //.add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)
         .add_plugin(graphics::AnimationPlugin)
+        .add_plugin(blaster::BlasterPlugin)
         //.add_plugin(enemy::EnemyPlugin)
         //.add_plugin(rounds::RoundManagerPlugin)
         //.add_plugin(spawn_manager::SpawnManagerPlugin)

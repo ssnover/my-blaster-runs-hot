@@ -151,7 +151,6 @@ fn enemy_blaster_system(
             let event = BlasterFiredEvent {
                 position: Vec2::new(enemy_tf.translation.x, enemy_tf.translation.y),
                 direction: enemy_weapon.aim_direction,
-                speed: 1.5,
                 from_player: false,
             };
             send_fire_event.send(event);
