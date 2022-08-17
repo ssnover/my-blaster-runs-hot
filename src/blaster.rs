@@ -39,12 +39,6 @@ pub fn on_blaster_fired(
 pub fn insert_blaster_at(cmds: &mut Commands, options: &BlasterFiredEvent) {
     let speed = options.direction * 2.0;
 
-    let sprite = Sprite {
-        color: Color::rgb(50.0, 0.0, 0.0),
-        custom_size: Some(Vec2::new(50.0, 50.0)),
-        ..Default::default()
-    };
-
     cmds.spawn()
         .insert_bundle(SpriteBundle {
             sprite: Sprite {

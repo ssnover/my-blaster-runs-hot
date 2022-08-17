@@ -52,7 +52,7 @@ fn main() {
         .add_state(states::GameState::MainGame)
         //start plugins
         //.add_plugin(MainMenuPlugin)
-        //.add_plugin(civilian::CivilianPlugin)
+        .add_plugin(civilian::CivilianPlugin)
         //.add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)
         .add_plugin(graphics::AnimationPlugin)

@@ -5,7 +5,7 @@ use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use rand::Rng;
 
 use crate::components::{AnimationTimer, Civilian, Player};
-use crate::constants::PLAYER_SPRITE_SCALE;
+use crate::constants::{PLAYER_SIZE, PLAYER_SPRITE_SCALE};
 use crate::projectile_collision::{LivingBeing, LivingBeingHitEvent};
 use crate::resources::{PlayerScore, WindowSize};
 use crate::states::GameState;
@@ -15,9 +15,12 @@ pub struct CivilianPlugin;
 impl Plugin for CivilianPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::on_update(GameState::MainGame).with_system(civilian_ai_system),
-            //
-            //.with_system(civilian_despawn_system),
+            SystemSet::on_enter(GameState::MainGame).with_system(spawn_civilian_system),
+        )
+        .add_system_set(
+            SystemSet::on_update(GameState::MainGame)
+                .with_system(civilian_ai_system)
+                .with_system(civilian_despawn_system),
         );
     }
 }
@@ -27,23 +30,25 @@ pub fn spawn_civilian(
     position: Vec2,
     texture_atlas_handle: &Handle<TextureAtlas>,
 ) {
+    let transform = Transform {
+        translation: Vec3::new(position.x, position.y, 0.0),
+        scale: Vec3::splat(PLAYER_SPRITE_SCALE),
+        ..default()
+    };
     // Add the player sprite
     let sprite = SpriteSheetBundle {
         texture_atlas: texture_atlas_handle.clone(),
-        transform: Transform {
-            scale: Vec3::new(PLAYER_SPRITE_SCALE, PLAYER_SPRITE_SCALE, 1.),
-            //translation: Vec3::new( 200., 200., 0.),
-            translation: Vec3::new(0.0, 0.0, 0.1),
-            ..Default::default()
-        },
-        ..Default::default()
+        transform: transform,
+
+        ..default()
     };
 
     cmds.spawn()
         .insert_bundle(sprite)
-        .insert(RigidBody::Dynamic)
+        .insert(RigidBody::KinematicVelocityBased)
         .insert(Velocity::zero())
-        .insert(Collider::cuboid(50.0, 50.0))
+        .insert(Collider::cuboid(PLAYER_SIZE, PLAYER_SIZE))
+        .insert(ActiveCollisionTypes::all())
         .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
         .insert(LivingBeing)
@@ -57,13 +62,16 @@ fn spawn_civilian_system(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let mut rng = rand::thread_rng();
-    let num_civilians = 5;
+    let mut num_civilians = 5;
 
-    let texture_handle = asset_server.load("darians-assets/Ball and Chain Bot/run.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
+    let texture_handle = asset_server.load("darians-assets/Bot Wheel/move with FX1.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(117.0, 26.0), 1, 8);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
-    for _ in 0..num_civilians {
+    for a in 0..num_civilians {
+        let x = rng.gen_range(-win_size.w / 2.0..win_size.w / 2.0);
+        let y = rng.gen_range(-win_size.h / 2.0..win_size.h / 2.0);
+
         spawn_civilian(
             &mut cmds,
             Vec2::new(
@@ -76,12 +84,12 @@ fn spawn_civilian_system(
 }
 
 fn civilian_ai_system(
-    mut civilian_query: Query<(&mut Velocity, &Transform), With<Civilian>>,
+    mut civilian_query: Query<(Entity, &mut Velocity, &Transform), With<Civilian>>,
     player_query: Query<&Transform, With<Player>>,
 ) {
     let player_tf = player_query.get_single().unwrap();
 
-    for (mut civ_velocity, civ_tf) in civilian_query.iter_mut() {
+    for (civ, mut civ_velocity, civ_tf) in civilian_query.iter_mut() {
         let position_diff = Vec2::new(
             player_tf.translation.x - civ_tf.translation.x,
             player_tf.translation.y - civ_tf.translation.y,

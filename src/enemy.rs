@@ -6,8 +6,8 @@ use rand::Rng;
 use crate::blaster::BlasterFiredEvent;
 use crate::components::{AreaOfEffect, Enemy, FromPlayer, Health, Player, Projectile, WeaponData};
 use crate::constants::{
-    BASE_SPEED, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPRITE_SCALE,
-    PLAYER_ATTRACTION_FORCE, SPRITE_SCALE, TIME_STEP,
+    ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPRITE_SCALE, PLAYER_ATTRACTION_FORCE,
+    TIME_STEP,
 };
 use crate::projectile_collision::LivingBeing;
 use crate::resources::{GameTextures, WindowSize};

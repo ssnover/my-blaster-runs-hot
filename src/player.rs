@@ -40,13 +40,13 @@ fn player_spawn_system(
     rapier_config.gravity = Vec2::ZERO;
 
     let texture_handle = asset_server.load("darians-assets/Ball and Chain Bot/run.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.0), 1, 8);
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.00), 1, 8);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
     // Add the player sprite
     let sprite = SpriteSheetBundle {
         texture_atlas: texture_atlas_handle,
-        transform: Transform::from_scale(Vec3::splat(6.0)),
+        transform: Transform::from_scale(Vec3::splat(PLAYER_SPRITE_SCALE)),
         ..default()
     };
 
@@ -54,9 +54,12 @@ fn player_spawn_system(
         .insert_bundle(sprite)
         .insert(RigidBody::KinematicVelocityBased)
         .insert(Velocity::zero())
-        .insert(Collider::cuboid(10.0, 10.0))
+        .insert(Collider::cuboid(PLAYER_SIZE, PLAYER_SIZE))
+        .insert(ActiveCollisionTypes::all())
         .insert(ActiveEvents::COLLISION_EVENTS)
-        .insert(Player { speed: 100.0 })
+        .insert(Player {
+            speed: PLAYER_SPEED,
+        })
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
         .insert(LivingBeing)
         .insert(Lives { lives_num: 5 })
@@ -171,7 +174,6 @@ fn player_fire_aim_system(
             direction: weapon_dir,
             from_player: true,
         };
-        println!("weapon_dir: {}", weapon_dir);
         send_fire_event.send(event);
     }
 }
