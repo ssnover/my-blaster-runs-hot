@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::utils::tracing::span::AsId;
 use bevy_rapier2d::prelude::*;
 use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use bevy_rapier2d::{prelude::*, rapier::prelude::Translation};
@@ -77,7 +78,7 @@ pub fn insert_blaster_at(cmds: &mut Commands, options: &BlasterFiredEvent) {
 
 pub fn destroy_blaster_on_contact(
     mut commands: Commands,
-    blasters: Query<(Entity, &Blaster)>,
+    blaster_query: Query<(Entity, &Blaster)>,
     mut contact_events: EventReader<CollisionEvent>,
 ) {
     for event in contact_events.iter() {
@@ -86,11 +87,24 @@ pub fn destroy_blaster_on_contact(
                 let first = *first;
                 let second = *second;
 
+                let mut blasters = Vec::new();
+
+                for (blaster, blaster_info) in blaster_query.iter() {
+                    blasters.push(blaster.id());
+                }
+
                 if flags == &CollisionEventFlags::empty() {
-                    for (blaster, blaster_info) in blasters.iter() {
-                        //Needs to be XOR because 2 bullets would be able to collide technicallydw
-                        if ((first == blaster) ^ (second == blaster)) {
-                            commands.entity(blaster).despawn_recursive();
+                    //FIX THIS CODE THIS DOES NOT DO ANYTHING
+                    for (blaster, blaster_info) in blaster_query.iter() {
+                        if (first == blaster) {
+                            if (!blasters.contains(&second.id())) {
+                                commands.entity(blaster).despawn_recursive();
+                            }
+                        }
+                        if (second == blaster) {
+                            if (!blasters.contains(&first.id())) {
+                                commands.entity(blaster).despawn_recursive();
+                            }
                         }
                     }
                 }

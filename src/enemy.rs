@@ -116,7 +116,7 @@ fn enemy_ai_system(
             player_tf.translation.y - enemy_tf.translation.y,
         );
 
-        enemy_velocity.linvel = position_diff.normalize() * PLAYER_SPEED;
+        enemy_velocity.linvel = position_diff.normalize() * 0.0;
     }
 }
 
