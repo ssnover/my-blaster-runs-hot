@@ -5,7 +5,9 @@ use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use rand::Rng;
 
 use crate::components::{AnimationTimer, Civilian, Player};
-use crate::constants::{PLAYER_SIZE, PLAYER_SPRITE_SCALE};
+use crate::constants::{
+    CIVILLIAN_GROUP, PLAYER_HEIGHT, PLAYER_SPEED, PLAYER_SPRITE_SCALE, PLAYER_WIDTH,
+};
 use crate::projectile_collision::{LivingBeing, LivingBeingHitEvent};
 use crate::resources::{PlayerScore, WindowSize};
 use crate::states::GameState;
@@ -35,7 +37,6 @@ pub fn spawn_civilian(
         scale: Vec3::splat(PLAYER_SPRITE_SCALE),
         ..default()
     };
-    // Add the player sprite
     let sprite = SpriteSheetBundle {
         texture_atlas: texture_atlas_handle.clone(),
         transform: transform,
@@ -45,11 +46,16 @@ pub fn spawn_civilian(
 
     cmds.spawn()
         .insert_bundle(sprite)
+        //Rigid Body
         .insert(RigidBody::KinematicVelocityBased)
+        .insert(LockedAxes::ROTATION_LOCKED)
         .insert(Velocity::zero())
-        .insert(Collider::cuboid(PLAYER_SIZE, PLAYER_SIZE))
+        //Collider
+        .insert(Collider::cuboid(PLAYER_WIDTH, PLAYER_HEIGHT))
         .insert(ActiveCollisionTypes::all())
         .insert(ActiveEvents::COLLISION_EVENTS)
+        .insert(CollisionGroups::new(CIVILLIAN_GROUP, CIVILLIAN_GROUP))
+        //Custom Functionality
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
         .insert(LivingBeing)
         .insert(Civilian);
@@ -64,8 +70,9 @@ fn spawn_civilian_system(
     let mut rng = rand::thread_rng();
     let mut num_civilians = 5;
 
-    let texture_handle = asset_server.load("darians-assets/Bot Wheel/move with FX1.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(117.0, 26.0), 1, 8);
+    let texture_handle =
+        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Green/Gunner_Green_Run.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(48.0, 48.0), 6, 1);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
     for a in 0..num_civilians {
@@ -94,7 +101,8 @@ fn civilian_ai_system(
             player_tf.translation.x - civ_tf.translation.x,
             player_tf.translation.y - civ_tf.translation.y,
         );
-        civ_velocity.linvel = position_diff;
+
+        civ_velocity.linvel = position_diff.normalize() * 0.0;
     }
 }
 
@@ -112,7 +120,6 @@ fn civilian_despawn_system(
             CollisionEvent::Started(first, second, flags) => {
                 let first = *first;
                 let second = *second;
-
                 if flags == &CollisionEventFlags::empty() {
                     for (civillian) in civilian_query.iter() {
                         //I think this will work because there is only 1 player, I guess this would work with more than 1 player
@@ -129,12 +136,4 @@ fn civilian_despawn_system(
             _ => {}
         }
     }
-
-    //     if collision.is_some() {
-    //         // Rescued this civilian!
-    //         score.0 += 100;
-    //         cmds.entity(entity).despawn_recursive();
-    //         println!("Current Score: {}", score.0);
-    //     }
-    // }
 }

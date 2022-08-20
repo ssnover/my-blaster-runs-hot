@@ -2,18 +2,18 @@ use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use bevy_rapier2d::prelude::*;
 
-use crate::components::{Enemy, FromPlayer, Player, Projectile};
+use crate::components::{Enemy, FromPlayer, Player};
 use crate::states::GameState;
 pub struct CollisionPlugin;
 
 #[derive(Component)]
 pub struct LivingBeing;
 
+//MAYBE REWRITE THIS TO TAKE DAMAGE, HEALTH AND LIVES
 pub struct LivingBeingHitEvent {
     pub entity: Entity,
 }
 
-//MAYBE REWRITE THIS TO TAKE DAMAGE, HEALTH AND LIVES
 pub struct LivingBeingDeathEvent {
     pub entity: Entity,
 }

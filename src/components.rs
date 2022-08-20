@@ -22,11 +22,6 @@ pub struct Civilian;
 pub struct Blaster;
 
 #[derive(Component)]
-pub struct Projectile {
-    pub from_player: bool,
-}
-
-#[derive(Component)]
 pub struct Lives {
     pub lives_num: u8,
 }

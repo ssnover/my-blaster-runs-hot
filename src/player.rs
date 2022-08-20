@@ -4,7 +4,7 @@ use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use nalgebra::{vector, Vector2};
 
 use crate::blaster::BlasterFiredEvent;
-use crate::components::{AnimationTimer, Enemy, Lives, Player, Projectile, WeaponData};
+use crate::components::{AnimationTimer, Enemy, Lives, Player, WeaponData};
 use crate::constants::*;
 use crate::debug;
 use crate::projectile_collision::{LivingBeing, LivingBeingDeathEvent, LivingBeingHitEvent};
@@ -39,8 +39,12 @@ fn player_spawn_system(
 ) {
     rapier_config.gravity = Vec2::ZERO;
 
-    let texture_handle = asset_server.load("darians-assets/Ball and Chain Bot/run.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.00), 1, 8);
+    // let texture_handle = asset_server.load("darians-assets/Ball and Chain Bot/run.png");
+    // let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.00), 1, 8);
+    // let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    let texture_handle =
+        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Blue/Gunner_Blue_Run.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(48.0, 48.0), 6, 1);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
     // Add the player sprite
@@ -52,16 +56,24 @@ fn player_spawn_system(
 
     cmds.spawn()
         .insert_bundle(sprite)
+        //Rigid Body
         .insert(RigidBody::KinematicVelocityBased)
+        .insert(LockedAxes::ROTATION_LOCKED)
         .insert(Velocity::zero())
-        .insert(Collider::cuboid(PLAYER_SIZE, PLAYER_SIZE))
+        //Collider
+        .insert(Collider::cuboid(PLAYER_WIDTH, PLAYER_HEIGHT))
         .insert(ActiveCollisionTypes::all())
         .insert(ActiveEvents::COLLISION_EVENTS)
+        .insert(CollisionGroups::new(
+            (PLAYER_GROUP | CIVILLIAN_GROUP),
+            (PLAYER_GROUP | CIVILLIAN_GROUP),
+        ))
+        //Custom functionality
+        .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
+        .insert(LivingBeing)
         .insert(Player {
             speed: PLAYER_SPEED,
         })
-        .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
-        .insert(LivingBeing)
         .insert(Lives { lives_num: 5 })
         .insert(WeaponData {
             ..Default::default()
@@ -173,6 +185,9 @@ fn player_fire_aim_system(
             position: Vec2::new(player_tf.translation.x, player_tf.translation.y),
             direction: weapon_dir,
             from_player: true,
+            memberships: ENEMY_GROUP,
+            filter: ENEMY_GROUP,
+            color: Color::rgb(0.0, 0.0, 1.0),
         };
         send_fire_event.send(event);
     }
