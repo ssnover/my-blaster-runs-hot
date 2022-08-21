@@ -6,14 +6,14 @@ use rand::Rng;
 
 use crate::blaster::BlasterFiredEvent;
 use crate::components::{
-    AnimationTimer, AreaOfEffect, Enemy, FromPlayer, Health, Player, WeaponData,
+    AnimationTimer, AreaOfEffect, Enemy, FromPlayer, Health, Lives, LivingBeing, Player, WeaponData,
 };
 use crate::constants::{
     ENEMY_GROUP, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPRITE_SCALE,
     PLAYER_ATTRACTION_FORCE, PLAYER_GROUP, PLAYER_HEIGHT, PLAYER_SPEED, PLAYER_SPRITE_SCALE,
     PLAYER_WIDTH, TIME_STEP,
 };
-use crate::projectile_collision::{LivingBeing, LivingBeingDeathEvent, LivingBeingHitEvent};
+use crate::projectile_collision::{LivingBeingDeathEvent, LivingBeingHitEvent};
 use crate::resources::{GameTextures, WindowSize};
 use crate::states::GameState;
 use crate::utils::{normalize_vec2, CooldownTimer};
@@ -70,6 +70,8 @@ pub fn spawn_crab(
         //Custom functionality
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
         .insert(LivingBeing)
+        .insert(Health { health: 1 })
+        .insert(Lives { lives_num: 1 })
         .insert(Enemy)
         .insert(WeaponData {
             firing: true,

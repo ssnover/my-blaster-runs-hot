@@ -32,7 +32,7 @@ use constants::*;
 use game_over::GameOverMenuPlugin;
 use main_menu::MainMenuPlugin;
 use projectile_collision::CollisionPlugin;
-use resources::{BlasterHeat, GameFont, GameTextures, PlayerScore, WindowSize};
+use resources::{BlasterHeat, GameFont, GameTextures, PlayerLives, PlayerScore, WindowSize};
 use states::GameState;
 use utils::CooldownTimer;
 
@@ -58,6 +58,7 @@ fn main() {
         .add_plugin(graphics::AnimationPlugin)
         .add_plugin(blaster::BlasterPlugin)
         .add_plugin(enemy::EnemyPlugin)
+        .add_plugin(projectile_collision::CollisionPlugin)
         //.add_plugin(rounds::RoundManagerPlugin)
         //.add_plugin(spawn_manager::SpawnManagerPlugin)
         .add_plugin(ui::UiPlugin)
@@ -91,6 +92,7 @@ fn setup_system(
     cmds.insert_resource(game_textures);
 
     cmds.insert_resource(PlayerScore(0));
+    cmds.insert_resource(PlayerLives(0));
     cmds.insert_resource(BlasterHeat {
         value: 0.,
         overheat_cooldown_timer: CooldownTimer::from_seconds(COOLDOWN_TIME_SECONDS),

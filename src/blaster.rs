@@ -5,10 +5,10 @@ use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use bevy_rapier2d::{prelude::*, rapier::prelude::Translation};
 use nalgebra::MatrixSliceMut1x3;
 
-use crate::components::{AreaOfEffect, Blaster, FromEnemy, FromPlayer};
+use crate::components::{AreaOfEffect, Blaster, FromEnemy, FromPlayer, Health, Lives, LivingBeing};
 use crate::constants::{BLASTER_GROUP, BLASTER_SPEED};
 use crate::player;
-use crate::projectile_collision::{LivingBeing, LivingBeingHitEvent};
+use crate::projectile_collision::LivingBeingHitEvent;
 use crate::states::GameState;
 
 pub struct BlasterFiredEvent {
@@ -73,7 +73,7 @@ pub fn insert_blaster_at(cmds: &mut Commands, options: &BlasterFiredEvent) {
             (options.filter),
         ))
         //Custom Functionality
-        .insert(Blaster);
+        .insert(Blaster { damage: 1 });
 }
 
 pub fn destroy_blaster_on_contact(
@@ -114,13 +114,11 @@ pub fn destroy_blaster_on_contact(
     }
 }
 
-//WOULD HAVE TO SEND DAMAGE AND LIVES IN THE EVENT SEND
-//DAMAGE SHOULD BE IN WEAPON DATA
 pub fn damage_on_contact(
     mut commands: Commands,
     mut send_living_being_hit: EventWriter<LivingBeingHitEvent>,
     blasters: Query<(Entity, &Blaster)>,
-    living_being: Query<Entity, With<LivingBeing>>,
+    mut living_being: Query<(Entity), With<LivingBeing>>,
     mut contact_events: EventReader<CollisionEvent>,
 ) {
     for event in contact_events.iter() {
@@ -130,14 +128,15 @@ pub fn damage_on_contact(
                 let second = *second;
 
                 if flags == &CollisionEventFlags::empty() {
-                    for (entity, blaster) in blasters.iter() {
-                        for being in living_being.iter() {
-                            if ((first == entity && second == being)
-                                || (first == being && second == entity))
+                    for (blaster_entity, blaster) in blasters.iter() {
+                        for (being) in living_being.iter() {
+                            if ((first == blaster_entity && second == being)
+                                || (first == being && second == blaster_entity))
                             {
-                                //I can add a damage component here for some future game reference
-                                //Also I need to differentiate between enemy bullets and enemies + player bullets and players
-                                send_living_being_hit.send(LivingBeingHitEvent { entity: being });
+                                send_living_being_hit.send(LivingBeingHitEvent {
+                                    entity: being,
+                                    damage: blaster.damage,
+                                });
                             }
                         }
                     }

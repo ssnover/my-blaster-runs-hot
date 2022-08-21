@@ -4,11 +4,11 @@ use bevy_rapier2d::prelude::*;
 use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use rand::Rng;
 
-use crate::components::{AnimationTimer, Civilian, Player};
+use crate::components::{AnimationTimer, Civilian, LivingBeing, Player};
 use crate::constants::{
     CIVILLIAN_GROUP, PLAYER_HEIGHT, PLAYER_SPEED, PLAYER_SPRITE_SCALE, PLAYER_WIDTH,
 };
-use crate::projectile_collision::{LivingBeing, LivingBeingHitEvent};
+use crate::projectile_collision::LivingBeingHitEvent;
 use crate::resources::{PlayerScore, WindowSize};
 use crate::states::GameState;
 
@@ -102,7 +102,7 @@ fn civilian_ai_system(
             player_tf.translation.y - civ_tf.translation.y,
         );
 
-        civ_velocity.linvel = position_diff.normalize() * 0.0;
+        civ_velocity.linvel = position_diff.normalize() * PLAYER_SPEED;
     }
 }
 

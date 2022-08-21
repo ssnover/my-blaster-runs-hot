@@ -4,11 +4,11 @@ use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use nalgebra::{vector, Vector2};
 
 use crate::blaster::BlasterFiredEvent;
-use crate::components::{AnimationTimer, Enemy, Lives, Player, WeaponData};
+use crate::components::{AnimationTimer, Enemy, Health, Lives, LivingBeing, Player, WeaponData};
 use crate::constants::*;
 use crate::debug;
-use crate::projectile_collision::{LivingBeing, LivingBeingDeathEvent, LivingBeingHitEvent};
-use crate::resources::{BlasterHeat, Controller, GameTextures, WindowSize};
+use crate::projectile_collision::{LivingBeingDeathEvent, LivingBeingHitEvent};
+use crate::resources::{BlasterHeat, Controller, GameTextures, PlayerLives, WindowSize};
 use crate::states::GameState;
 use crate::utils::CooldownTimer;
 pub struct PlayerPlugin;
@@ -25,7 +25,8 @@ impl Plugin for PlayerPlugin {
                 SystemSet::on_update(GameState::MainGame)
                     .with_system(player_move_system)
                     .with_system(player_fire_aim_system)
-                    .with_system(collision_with_enemy),
+                    .with_system(collision_with_enemy)
+                    .with_system(display_lives_ui),
             );
     }
 }
@@ -57,7 +58,7 @@ fn player_spawn_system(
     cmds.spawn()
         .insert_bundle(sprite)
         //Rigid Body
-        .insert(RigidBody::KinematicVelocityBased)
+        .insert(RigidBody::Dynamic)
         .insert(LockedAxes::ROTATION_LOCKED)
         .insert(Velocity::zero())
         //Collider
@@ -74,7 +75,12 @@ fn player_spawn_system(
         .insert(Player {
             speed: PLAYER_SPEED,
         })
-        .insert(Lives { lives_num: 5 })
+        .insert(Health {
+            health: PLAYER_HEALTH,
+        })
+        .insert(Lives {
+            lives_num: PLAYER_LIVES,
+        })
         .insert(WeaponData {
             ..Default::default()
         });
@@ -194,7 +200,7 @@ fn player_fire_aim_system(
 }
 
 pub fn collision_with_enemy(
-    mut send_player_hit: EventWriter<LivingBeingHitEvent>,
+    mut send_player_hit: EventWriter<LivingBeingDeathEvent>,
     player_query: Query<(Entity, &Lives), With<Player>>,
     enemy_query: Query<Entity, With<Enemy>>,
     mut collision_events: EventReader<CollisionEvent>,
@@ -210,8 +216,8 @@ pub fn collision_with_enemy(
                         for (enemy) in enemy_query.iter() {
                             if ((first == player) ^ (second == player)) {
                                 if ((first == enemy) ^ (second == enemy)) {
-                                    //send_player_hit.send(LivingBeingHitEvent { entity: player });
-                                    lives.lives_num.saturating_sub(1);
+                                    send_player_hit.send(LivingBeingDeathEvent { entity: player });
+                                    //lives.lives_num = lives.lives_num.saturating_sub(1);
                                 }
                             }
                         }
@@ -221,4 +227,12 @@ pub fn collision_with_enemy(
             _ => {}
         }
     }
+}
+
+pub fn display_lives_ui(
+    player_query: Query<&Lives, With<Player>>,
+    mut res_lives: ResMut<PlayerLives>,
+) {
+    let curr_lives = player_query.get_single().unwrap();
+    res_lives.0 = curr_lives.lives_num;
 }
