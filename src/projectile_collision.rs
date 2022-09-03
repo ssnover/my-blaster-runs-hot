@@ -3,7 +3,7 @@ use bevy::sprite::collide_aabb::collide;
 use bevy_rapier2d::prelude::*;
 
 use crate::components::{Enemy, FromPlayer, Health, Lives, LivingBeing, Player};
-use crate::constants::PLAYER_HEALTH;
+use crate::constants::{KNOCKBACK_POWER, PLAYER_HEALTH};
 use crate::states::GameState;
 pub struct CollisionPlugin;
 
@@ -12,7 +12,8 @@ impl Plugin for CollisionPlugin {
         app.add_system_set(
             SystemSet::on_update(GameState::MainGame)
                 .with_system(on_living_being_hit)
-                .with_system(on_living_being_dead),
+                .with_system(on_living_being_dead)
+                .with_system(on_knock_back),
         );
     }
 }
@@ -25,6 +26,11 @@ pub struct LivingBeingHitEvent {
 
 pub struct LivingBeingDeathEvent {
     pub entity: Entity,
+}
+
+pub struct KnockBackEvent {
+    pub entity: Entity,
+    pub direction: Vec2,
 }
 
 pub fn on_living_being_hit(
@@ -71,6 +77,23 @@ pub fn on_living_being_dead(
 
             if lives.lives_num == 0 {
                 commands.entity(being).despawn_recursive();
+            }
+        }
+    }
+}
+
+pub fn on_knock_back(
+    mut knockback_events: EventReader<KnockBackEvent>,
+    mut living_being: Query<(Entity, &mut ExternalImpulse), With<LivingBeing>>,
+) {
+    for event in knockback_events.iter() {
+        println!("In on_knock_back");
+
+        for (being, mut ext_impulse) in living_being.iter_mut() {
+            println! {"being: {}, event.entity: {}", being.id(), event.entity.id()}
+            if (being == event.entity) {
+                println! {"event.direction: {}", event.direction}
+                ext_impulse.impulse = event.direction.normalize() * KNOCKBACK_POWER;
             }
         }
     }

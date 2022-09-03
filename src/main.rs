@@ -52,11 +52,11 @@ fn main() {
         .add_state(states::GameState::MainGame)
         //start plugins
         //.add_plugin(MainMenuPlugin)
-        .add_plugin(civilian::CivilianPlugin)
+        //.add_plugin(civilian::CivilianPlugin)
         //.add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)
         .add_plugin(graphics::AnimationPlugin)
-        .add_plugin(blaster::BlasterPlugin)
+        //.add_plugin(blaster::BlasterPlugin)
         .add_plugin(enemy::EnemyPlugin)
         .add_plugin(projectile_collision::CollisionPlugin)
         //.add_plugin(rounds::RoundManagerPlugin)

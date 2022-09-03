@@ -22,9 +22,11 @@ pub const BLASTER_SPEED: f32 = 200.0;
 
 //Other Constants
 pub const TIME_STEP: f32 = 1. / 60.;
+pub const KNOCKBACK_POWER: f32 = 500.0;
 
 //Collision Group Flags
 pub const PLAYER_GROUP: u32 = 0b1;
 pub const ENEMY_GROUP: u32 = 0b10;
 pub const CIVILLIAN_GROUP: u32 = 0b100;
 pub const BLASTER_GROUP: u32 = 0b1000;
+pub const PHYSICAL_GROUP: u32 = 0b10000;

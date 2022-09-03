@@ -9,11 +9,11 @@ use crate::components::{
     AnimationTimer, AreaOfEffect, Enemy, FromPlayer, Health, Lives, LivingBeing, Player, WeaponData,
 };
 use crate::constants::{
-    ENEMY_GROUP, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPRITE_SCALE,
+    ENEMY_GROUP, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPRITE_SCALE, PHYSICAL_GROUP,
     PLAYER_ATTRACTION_FORCE, PLAYER_GROUP, PLAYER_HEIGHT, PLAYER_SPEED, PLAYER_SPRITE_SCALE,
     PLAYER_WIDTH, TIME_STEP,
 };
-use crate::projectile_collision::{LivingBeingDeathEvent, LivingBeingHitEvent};
+use crate::projectile_collision::{KnockBackEvent, LivingBeingDeathEvent, LivingBeingHitEvent};
 use crate::resources::{GameTextures, WindowSize};
 use crate::states::GameState;
 use crate::utils::{normalize_vec2, CooldownTimer};
@@ -26,6 +26,7 @@ impl Plugin for EnemyPlugin {
         app.add_event::<LivingBeingHitEvent>()
             .add_event::<LivingBeingDeathEvent>()
             .add_event::<BlasterFiredEvent>()
+            .add_event::<KnockBackEvent>()
             .add_system_set(
                 SystemSet::on_enter(GameState::MainGame).with_system(enemy_spawn_system),
             )
@@ -66,7 +67,10 @@ pub fn spawn_crab(
         .insert(Collider::cuboid(PLAYER_WIDTH, PLAYER_HEIGHT))
         .insert(ActiveCollisionTypes::all())
         .insert(ActiveEvents::COLLISION_EVENTS)
-        .insert(CollisionGroups::new(ENEMY_GROUP, ENEMY_GROUP))
+        .insert(CollisionGroups::new(
+            ENEMY_GROUP | PHYSICAL_GROUP,
+            ENEMY_GROUP | PHYSICAL_GROUP,
+        ))
         //Custom functionality
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
         .insert(LivingBeing)

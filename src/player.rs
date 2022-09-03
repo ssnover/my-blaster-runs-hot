@@ -1,3 +1,4 @@
+use bevy::math::vec2;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
@@ -5,9 +6,9 @@ use nalgebra::{vector, Vector2};
 
 use crate::blaster::BlasterFiredEvent;
 use crate::components::{AnimationTimer, Enemy, Health, Lives, LivingBeing, Player, WeaponData};
-use crate::constants::*;
+use crate::constants::*; //Should probably fix this, it's a little lazy
 use crate::debug;
-use crate::projectile_collision::{LivingBeingDeathEvent, LivingBeingHitEvent};
+use crate::projectile_collision::{KnockBackEvent, LivingBeingDeathEvent, LivingBeingHitEvent};
 use crate::resources::{BlasterHeat, Controller, GameTextures, PlayerLives, WindowSize};
 use crate::states::GameState;
 use crate::utils::CooldownTimer;
@@ -18,6 +19,7 @@ impl Plugin for PlayerPlugin {
         app.add_event::<LivingBeingHitEvent>()
             .add_event::<LivingBeingDeathEvent>()
             .add_event::<BlasterFiredEvent>()
+            .add_event::<KnockBackEvent>()
             .add_system_set(
                 SystemSet::on_enter(GameState::MainGame).with_system(player_spawn_system),
             )
@@ -61,13 +63,18 @@ fn player_spawn_system(
         .insert(RigidBody::Dynamic)
         .insert(LockedAxes::ROTATION_LOCKED)
         .insert(Velocity::zero())
+        .insert(ExternalImpulse {
+            impulse: Vec2::new(0.0, 0.0),
+            torque_impulse: 0.0,
+        })
         //Collider
         .insert(Collider::cuboid(PLAYER_WIDTH, PLAYER_HEIGHT))
         .insert(ActiveCollisionTypes::all())
+        .insert(ColliderMassProperties::Density(1.0))
         .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(CollisionGroups::new(
-            (PLAYER_GROUP | CIVILLIAN_GROUP),
-            (PLAYER_GROUP | CIVILLIAN_GROUP),
+            (PLAYER_GROUP | CIVILLIAN_GROUP | PHYSICAL_GROUP),
+            (PLAYER_GROUP | CIVILLIAN_GROUP | PHYSICAL_GROUP),
         ))
         //Custom functionality
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
@@ -199,10 +206,13 @@ fn player_fire_aim_system(
     }
 }
 
+//mut ext_impulses: Query<&mut ExternalImpulse>
+
 pub fn collision_with_enemy(
     mut send_player_hit: EventWriter<LivingBeingDeathEvent>,
-    player_query: Query<(Entity, &Lives), With<Player>>,
-    enemy_query: Query<Entity, With<Enemy>>,
+    mut send_knockback_event: EventWriter<KnockBackEvent>,
+    player_query: Query<(Entity, &Lives, &Transform), With<Player>>,
+    enemy_query: Query<(Entity, &Transform), With<Enemy>>,
     mut collision_events: EventReader<CollisionEvent>,
 ) {
     for event in collision_events.iter() {
@@ -212,13 +222,20 @@ pub fn collision_with_enemy(
                 let second = *second;
 
                 if flags == &CollisionEventFlags::empty() {
-                    for (player, lives) in player_query.iter() {
-                        for (enemy) in enemy_query.iter() {
-                            if ((first == player) ^ (second == player)) {
-                                if ((first == enemy) ^ (second == enemy)) {
-                                    send_player_hit.send(LivingBeingDeathEvent { entity: player });
-                                    //lives.lives_num = lives.lives_num.saturating_sub(1);
-                                }
+                    for (player, lives, player_tf) in player_query.iter() {
+                        for (enemy, enemy_tf) in enemy_query.iter() {
+                            if ((first == player) && (second == enemy))
+                                || ((first == enemy) && (second == player))
+                            {
+                                let knock_back_direction = Vec2::new(
+                                    player_tf.translation.x - enemy_tf.translation.x,
+                                    player_tf.translation.y - enemy_tf.translation.y,
+                                );
+                                send_player_hit.send(LivingBeingDeathEvent { entity: player });
+                                send_knockback_event.send(KnockBackEvent {
+                                    entity: player,
+                                    direction: knock_back_direction,
+                                });
                             }
                         }
                     }
