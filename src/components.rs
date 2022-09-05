@@ -1,5 +1,7 @@
-use crate::utils::CooldownTimer;
+use crate::{states::SpriteLocation, utils::CooldownTimer};
 use bevy::prelude::*;
+use num_traits::ToPrimitive;
+use std::marker::{Send, Sync};
 
 #[derive(Component, Deref, DerefMut)]
 pub struct AnimationTimer(pub Timer);
@@ -14,6 +16,11 @@ pub struct Blaster {
 
 #[derive(Component)]
 pub struct Civilian;
+
+#[derive(Component)]
+pub struct Direction {
+    pub is_Right: bool,
+}
 
 #[derive(Component)]
 pub struct Enemy;

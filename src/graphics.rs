@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::components::AnimationTimer;
+use crate::{
+    components::{AnimationTimer, Direction},
+    states::{PlayerState, SpriteLocation},
+};
 
 pub struct AnimationPlugin;
 
@@ -11,16 +14,18 @@ impl Plugin for AnimationPlugin {
     }
 }
 
-fn animation_system(
+fn animation_system<T>(
     time: Res<Time>,
     texture_atlases: Res<Assets<TextureAtlas>>,
     mut query: Query<(
         &mut AnimationTimer,
         &mut TextureAtlasSprite,
         &Handle<TextureAtlas>,
-        &Velocity,
+        &mut T,
     )>,
-) {
+) where
+    T: Component + SpriteLocation,
+{
     for (mut timer, mut sprite, texture_atlas_handle, velocity) in query.iter_mut() {
         timer.tick(time.delta());
         if timer.just_finished() {

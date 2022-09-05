@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use bevy::math::vec2;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -5,13 +7,16 @@ use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use nalgebra::{vector, Vector2};
 
 use crate::blaster::BlasterFiredEvent;
-use crate::components::{AnimationTimer, Enemy, Health, Lives, LivingBeing, Player, WeaponData};
+use crate::components::{
+    AnimationTimer, Direction, Enemy, Health, Lives, LivingBeing, Player, WeaponData,
+};
 use crate::constants::*; //Should probably fix this, it's a little lazy
 use crate::debug;
 use crate::projectile_collision::{KnockBackEvent, LivingBeingDeathEvent, LivingBeingHitEvent};
 use crate::resources::{BlasterHeat, Controller, GameTextures, PlayerLives, WindowSize};
-use crate::states::GameState;
+use crate::states::{AnimationInfo, GameState, PlayerState, SpriteLocation};
 use crate::utils::CooldownTimer;
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -46,8 +51,8 @@ fn player_spawn_system(
     // let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.00), 1, 8);
     // let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let texture_handle =
-        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Blue/Gunner_Blue_Run.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(48.0, 48.0), 6, 1);
+        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Blue/Blue_Soldier.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(50.0, 50.0), 8, 5);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
     // Add the player sprite
@@ -90,11 +95,15 @@ fn player_spawn_system(
         })
         .insert(WeaponData {
             ..Default::default()
-        });
+        })
+        .insert(AnimationInfo {
+            state: Arc::new(Mutex::new(PlayerState::Idle)),
+        })
+        .insert(Direction { is_Right: true });
 }
 
-fn player_move_system(
-    mut players: Query<(Entity, &mut Velocity, &Player)>,
+fn player_move_system<T: SpriteLocation + Send + Sync + 'static>(
+    mut players: Query<(Entity, &mut Velocity, &Player, &mut AnimationInfo<T>)>,
 
     controller: Option<Res<Controller>>,
     axes: Res<Axis<GamepadAxis>>,
@@ -129,8 +138,15 @@ fn player_move_system(
         }
     }
 
-    for (mut player_entity, mut velocity, player) in players.get_single_mut() {
+    for (mut player_entity, mut velocity, player, mut player_animation_info) in
+        players.get_single_mut()
+    {
         *velocity = Velocity::linear(player_vel * player.speed);
+        if (velocity.linvel == Vec2 { x: 0.0, y: 0.0 }) {
+            *player_animation_info.state.lock().unwrap() = PlayerState::Idle;
+        } else {
+            player_animation_info.state = ;
+        }
     }
 }
 
@@ -139,7 +155,7 @@ fn player_fire_aim_system(
     time: Res<Time>,
     mut blaster_heat: ResMut<BlasterHeat>,
 
-    mut player: Query<(Entity, &Transform, &mut WeaponData), With<Player>>,
+    mut player: Query<(Entity, &Transform, &mut WeaponData, &mut Direction), With<Player>>,
 
     mut send_fire_event: EventWriter<BlasterFiredEvent>,
 
@@ -151,7 +167,7 @@ fn player_fire_aim_system(
     win_size: Res<WindowSize>,
     windows: Res<Windows>,
 ) {
-    let (player, player_tf, mut weapon) = player.get_single_mut().unwrap();
+    let (player, player_tf, mut weapon, mut player_dir) = player.get_single_mut().unwrap();
     let mut weapon_dir = Vec2::new(0.0, 0.0);
     let window = windows.get_primary().unwrap();
 
@@ -204,9 +220,13 @@ fn player_fire_aim_system(
         };
         send_fire_event.send(event);
     }
-}
 
-//mut ext_impulses: Query<&mut ExternalImpulse>
+    if weapon_dir.x > 0.0 {
+        player_dir.is_Right = true;
+    } else {
+        player_dir.is_Right = false;
+    }
+}
 
 pub fn collision_with_enemy(
     mut send_player_hit: EventWriter<LivingBeingDeathEvent>,
