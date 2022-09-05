@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    ecs::query::{WorldQuery, WorldQueryGats},
+    prelude::*,
+};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -14,17 +17,22 @@ impl Plugin for AnimationPlugin {
     }
 }
 
-fn animation_system<T>(
+fn animation_system<T, F>(
     time: Res<Time>,
     texture_atlases: Res<Assets<TextureAtlas>>,
-    mut query: Query<(
-        &mut AnimationTimer,
-        &mut TextureAtlasSprite,
-        &Handle<TextureAtlas>,
-        &mut T,
-    )>,
+    mut query: Query<
+        (
+            &mut AnimationTimer,
+            &mut TextureAtlasSprite,
+            &Handle<TextureAtlas>,
+            &mut T,
+        ),
+        (F),
+    >,
 ) where
     T: Component + SpriteLocation,
+    F: WorldQuery,
+    for<'a> <F as WorldQueryGats<'a>>::Fetch: Clone,
 {
     for (mut timer, mut sprite, texture_atlas_handle, velocity) in query.iter_mut() {
         timer.tick(time.delta());
@@ -34,10 +42,10 @@ fn animation_system<T>(
         }
 
         //This may be a naive approach but it might jsut work for what we need, and it would be tedious to create 2 copies of every sprite
-        if velocity.linvel.x < 0.0 {
-            sprite.flip_x = true;
-        } else {
-            sprite.flip_x = false;
-        }
+        // if velocity.linvel.x < 0.0 {
+        //     sprite.flip_x = true;
+        // } else {
+        //     sprite.flip_x = false;
+        // }
     }
 }
