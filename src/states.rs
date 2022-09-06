@@ -1,6 +1,9 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::prelude::Component;
+use bevy::{
+    prelude::Component,
+    reflect::{TypeData, TypeInfo},
+};
 use num_derive::{FromPrimitive, ToPrimitive};
 
 use crate::components::Player;
@@ -14,7 +17,7 @@ pub enum GameState {
 }
 
 pub trait SpriteLocation {
-    fn location(&self) -> (u8, u8);
+    fn location(&self) -> (usize, usize);
 }
 
 pub enum PlayerState {
@@ -31,13 +34,13 @@ pub struct PlayerAnimationInfo {
 }
 
 impl SpriteLocation for PlayerAnimationInfo {
-    fn location(&self) -> (u8, u8) {
-        match self.state {
-            Death => (0, 8),
-            Run => (1, 6),
-            Jump => (2, 2),
-            Crouch => (3, 4),
-            Idle => (4, 5),
+    fn location(&self) -> (usize, usize) {
+        match &self.state {
+            PlayerState::Death => (0 * 8, 8),
+            PlayerState::Run => (1 * 8, 6),
+            PlayerState::Jump => (2 * 8, 2),
+            PlayerState::Crouch => (3 * 8, 4),
+            PlayerState::Idle => (4 * 8, 5),
             _ => (0, 0),
         }
     }
@@ -55,11 +58,11 @@ pub struct EnemyAnimationInfo {
 }
 
 impl SpriteLocation for EnemyAnimationInfo {
-    fn location(&self) -> (u8, u8) {
-        match self.state {
-            Death => (0, 8),
-            Run => (1, 6),
-            Idle => (4, 5),
+    fn location(&self) -> (usize, usize) {
+        match &self.state {
+            EnemyState::Death => (0 * 8, 8),
+            EnemyState::Run => (1 * 8, 6),
+            EnemyState::Idle => (4 * 8, 5),
             _ => (0, 0),
         }
     }

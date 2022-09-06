@@ -19,7 +19,7 @@ pub struct Civilian;
 
 #[derive(Component)]
 pub struct Direction {
-    pub is_Right: bool,
+    pub is_right: bool,
 }
 
 #[derive(Component)]
@@ -45,9 +45,7 @@ pub struct Lives {
 pub struct LivingBeing;
 
 #[derive(Component)]
-pub struct Player {
-    pub speed: f32,
-}
+pub struct Player;
 #[derive(Component)]
 pub struct PlayerLivesUI;
 

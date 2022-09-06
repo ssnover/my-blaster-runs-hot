@@ -14,7 +14,7 @@ use crate::constants::*; //Should probably fix this, it's a little lazy
 use crate::debug;
 use crate::projectile_collision::{KnockBackEvent, LivingBeingDeathEvent, LivingBeingHitEvent};
 use crate::resources::{BlasterHeat, Controller, GameTextures, PlayerLives, WindowSize};
-use crate::states::{AnimationInfo, GameState, PlayerState, SpriteLocation};
+use crate::states::{GameState, PlayerAnimationInfo, PlayerState, SpriteLocation};
 use crate::utils::CooldownTimer;
 
 pub struct PlayerPlugin;
@@ -84,9 +84,7 @@ fn player_spawn_system(
         //Custom functionality
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
         .insert(LivingBeing)
-        .insert(Player {
-            speed: PLAYER_SPEED,
-        })
+        .insert(Player)
         .insert(Health {
             health: PLAYER_HEALTH,
         })
@@ -96,14 +94,14 @@ fn player_spawn_system(
         .insert(WeaponData {
             ..Default::default()
         })
-        .insert(AnimationInfo {
-            state: Arc::new(Mutex::new(PlayerState::Idle)),
+        .insert(PlayerAnimationInfo {
+            state: PlayerState::Idle,
         })
-        .insert(Direction { is_Right: true });
+        .insert(Direction { is_right: true });
 }
 
-fn player_move_system<T: SpriteLocation + Send + Sync + 'static>(
-    mut players: Query<(Entity, &mut Velocity, &Player, &mut AnimationInfo<T>)>,
+fn player_move_system(
+    mut players: Query<(Entity, &mut Velocity, &Player, &mut PlayerAnimationInfo)>,
 
     controller: Option<Res<Controller>>,
     axes: Res<Axis<GamepadAxis>>,
@@ -111,6 +109,9 @@ fn player_move_system<T: SpriteLocation + Send + Sync + 'static>(
 
     keys: Res<Input<KeyCode>>,
 ) {
+    let mut is_jump = false;
+    let mut is_crouch = false;
+
     let mut player_vel = Vec2::new(0.0, 0.0);
 
     if let Some(controller) = controller {
@@ -136,16 +137,25 @@ fn player_move_system<T: SpriteLocation + Send + Sync + 'static>(
         } else {
             player_vel.x = 0.;
         }
+        if keys.pressed(KeyCode::Space) {
+            is_jump = true;
+        }
+        if keys.pressed(KeyCode::C) {
+            is_crouch = false;
+        }
     }
 
-    for (mut player_entity, mut velocity, player, mut player_animation_info) in
-        players.get_single_mut()
-    {
-        *velocity = Velocity::linear(player_vel * player.speed);
+    for (mut player_entity, mut velocity, player, mut player_state) in players.get_single_mut() {
+        *velocity = Velocity::linear(player_vel * PLAYER_SPEED);
         if (velocity.linvel == Vec2 { x: 0.0, y: 0.0 }) {
-            *player_animation_info.state.lock().unwrap() = PlayerState::Idle;
+            player_state.state = PlayerState::Idle;
         } else {
-            player_animation_info.state = ;
+            player_state.state = PlayerState::Run;
+        }
+        if (is_jump) {
+            player_state.state = PlayerState::Jump;
+        } else if (is_crouch) {
+            player_state.state = PlayerState::Crouch;
         }
     }
 }
@@ -222,9 +232,9 @@ fn player_fire_aim_system(
     }
 
     if weapon_dir.x > 0.0 {
-        player_dir.is_Right = true;
+        player_dir.is_right = true;
     } else {
-        player_dir.is_Right = false;
+        player_dir.is_right = false;
     }
 }
 
