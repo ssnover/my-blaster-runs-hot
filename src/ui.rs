@@ -13,7 +13,8 @@ impl Plugin for UiPlugin {
             .add_system_set(
                 SystemSet::on_update(GameState::MainGame)
                     .with_system(update_score_system)
-                    .with_system(update_lives_system),
+                    .with_system(update_lives_system)
+                    .with_system(update_round_system),
             );
     }
 }
@@ -62,10 +63,10 @@ fn spawn_ui_system(mut cmds: Commands, score: Res<PlayerScore>, font: Res<GameFo
             align_self: AlignSelf::FlexStart,
             position_type: PositionType::Absolute,
             position: UiRect {
-                left: Val::Px(0.0),
-                right: Val::Percent(85.0),
-                top: Val::Percent(0.0),
-                bottom: Val::Percent(80.0),
+                left: Val::Percent(85.0),
+                right: Val::Percent(0.0),
+                top: Val::Percent(80.0),
+                bottom: Val::Percent(0.0),
             },
             ..default()
         }),
