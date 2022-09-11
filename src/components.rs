@@ -56,6 +56,11 @@ pub struct RoundUI;
 pub struct ScoreUi;
 
 #[derive(Component)]
+pub struct StartofGame {
+    pub is_start: bool,
+}
+
+#[derive(Component)]
 pub struct WeaponData {
     pub aim_direction: Vec2, //This seems fucking useless now
     pub firing: bool,
