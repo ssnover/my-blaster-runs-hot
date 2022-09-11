@@ -28,9 +28,6 @@ impl Plugin for EnemyPlugin {
             .add_event::<BlasterFiredEvent>()
             .add_event::<KnockBackEvent>()
             .add_system_set(
-                SystemSet::on_enter(GameState::MainGame).with_system(enemy_spawn_system),
-            )
-            .add_system_set(
                 SystemSet::on_update(GameState::MainGame)
                     .with_system(enemy_ai_system)
                     .with_system(enemy_blaster_system),

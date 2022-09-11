@@ -50,6 +50,9 @@ pub struct Player;
 pub struct PlayerLivesUI;
 
 #[derive(Component)]
+pub struct RoundUI;
+
+#[derive(Component)]
 pub struct ScoreUi;
 
 #[derive(Component)]
