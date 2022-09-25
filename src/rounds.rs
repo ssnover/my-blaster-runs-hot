@@ -80,9 +80,7 @@ impl Plugin for RoundManagerPlugin {
             .add_event::<NewRoundEvent>()
             .add_startup_system(insert_startup_resources)
             .add_system_set(
-                SystemSet::on_enter(GameState::MainGame)
-                    .with_system(start_round_system)
-                    .with_system(populate_spawn_queue_system),
+                SystemSet::on_enter(GameState::MainGame).with_system(start_round_system),
             )
             .add_system_set(
                 SystemSet::on_update(GameState::MainGame).with_system(populate_spawn_queue_system),
