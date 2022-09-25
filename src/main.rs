@@ -49,9 +49,9 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         .add_plugin(RapierDebugRenderPlugin::default())
-        .add_state(states::GameState::MainGame)
+        .add_state(states::GameState::MainMenu)
         //start plugins
-        //.add_plugin(MainMenuPlugin)
+        .add_plugin(MainMenuPlugin)
         .add_plugin(civilian::CivilianPlugin)
         //.add_plugin(gamepad::GamepadPlugin)
         .add_plugin(player::PlayerPlugin)
@@ -76,7 +76,7 @@ fn setup_system(
     mut state: ResMut<State<GameState>>,
 ) {
     // Add the camera
-    cmds.spawn_bundle(Camera2dBundle::default());
+    //cmds.spawn_bundle(Camera2dBundle::default());
 
     // Add WinSize resource
     let window = windows.get_primary().unwrap();

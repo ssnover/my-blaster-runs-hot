@@ -7,7 +7,7 @@ use crate::states::GameState;
 use bevy::app::AppExit;
 
 use bevy::sprite::Rect;
-use bevy::{prelude::*, ui::FocusPolicy};
+use bevy::{prelude::*, ui::FocusPolicy, ui::UiRect};
 
 pub struct MainMenu;
 
@@ -22,13 +22,13 @@ pub struct UIAssets {
     pub button_pressed: Handle<Image>,
 }
 
-// impl Plugin for MainMenuPlugin {
-//     fn build(&self, app: &mut App) {
-//         app.add_startup_system(setup_menu)
-//             .add_system_set(SystemSet::on_pause(GameState::MainMenu).with_system(despawn_menu))
-//             .add_system(handle_start_button);
-//     }
-// }
+impl Plugin for MainMenuPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_startup_system(setup_menu)
+            .add_system_set(SystemSet::on_pause(GameState::MainMenu).with_system(despawn_menu))
+            .add_system(handle_start_button);
+    }
+}
 
 fn despawn_menu(mut commands: Commands, button_query: Query<Entity, With<Button>>) {
     for entity in button_query.iter() {
@@ -64,56 +64,60 @@ fn handle_start_button(
     }
 }
 
-// fn setup_menu(mut commands: Commands, assets: Res<AssetServer>) {
-//     let ui_assets = UIAssets {
-//         font: assets.load("FiraSans-Bold.ttf"),
-//         button: assets.load("button.png"),
-//         button_pressed: assets.load("button_pressed.png"),
-//     };
+fn setup_menu(mut commands: Commands, assets: Res<AssetServer>) {
+    let ui_assets = UIAssets {
+        font: assets.load("FiraSans-Bold.ttf"),
+        button: assets.load("button.png"),
+        button_pressed: assets.load("button_pressed.png"),
+    };
 
-//     commands.spawn_bundle(Camera2dBundle::default());
-//     commands
-//         .spawn_bundle(ButtonBundle {
-//             style: Style {
-//                 align_self: AlignSelf::Center,
-//                 align_items: AlignItems::Center,
-//                 justify_content: JustifyContent::Center,
-//                 size: Size::new(Val::Percent(20.0), Val::Percent(10.0)),
-//                 margin: Rect::all(Val::Auto),
-//                 ..Default::default()
-//             },
-//             color: Color::NONE.into(),
-//             ..Default::default()
-//         })
-//         .insert(ButtonActive(true))
-//         .with_children(|parent| {
-//             parent
-//                 .spawn_bundle(ImageBundle {
-//                     style: Style {
-//                         size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
-//                         justify_content: JustifyContent::Center,
-//                         align_items: AlignItems::Center,
-//                         ..Default::default()
-//                     },
-//                     image: ui_assets.button.clone().into(),
-//                     ..Default::default()
-//                 })
-//                 .insert(FocusPolicy::Pass)
-//                 .with_children(|parent| {
-//                     parent.spawn_bundle(TextBundle {
-//                         text: Text::with_section(
-//                             "Start Game",
-//                             TextStyle {
-//                                 font: ui_assets.font.clone(),
-//                                 font_size: 40.0,
-//                                 color: Color::rgb(0.9, 0.9, 0.9),
-//                             },
-//                             Default::default(),
-//                         ),
-//                         focus_policy: FocusPolicy::Pass,
-//                         ..Default::default()
-//                     });
-//                 });
-//         });
-//     commands.insert_resource(ui_assets);
-// }
+    commands.spawn_bundle(Camera2dBundle::default());
+    commands
+        .spawn_bundle(ButtonBundle {
+            style: Style {
+                align_self: AlignSelf::Center,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                size: Size::new(Val::Percent(20.0), Val::Percent(10.0)),
+                position: UiRect::new(
+                    Val::Percent(40.0),
+                    Val::Percent(0.0),
+                    Val::Percent(0.0),
+                    Val::Percent(0.0),
+                ),
+                ..Default::default()
+            },
+            color: Color::NONE.into(),
+            ..Default::default()
+        })
+        .insert(ButtonActive(true))
+        .with_children(|parent| {
+            parent
+                .spawn_bundle(ImageBundle {
+                    style: Style {
+                        size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..Default::default()
+                    },
+                    image: ui_assets.button.clone().into(),
+                    ..Default::default()
+                })
+                .insert(FocusPolicy::Pass)
+                .with_children(|parent| {
+                    parent.spawn_bundle(TextBundle {
+                        text: Text::from_section(
+                            "Start Game",
+                            TextStyle {
+                                font: ui_assets.font.clone(),
+                                font_size: 40.0,
+                                color: Color::rgb(0.9, 0.9, 0.9),
+                            },
+                        ),
+                        focus_policy: FocusPolicy::Pass,
+                        ..Default::default()
+                    });
+                });
+        });
+    commands.insert_resource(ui_assets);
+}
