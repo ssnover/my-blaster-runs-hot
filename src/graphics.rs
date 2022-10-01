@@ -32,17 +32,15 @@ fn animation_system<T: Component + SpriteLocation>(
     for (mut timer, mut sprite, texture_atlas_handle, info) in query.iter_mut() {
         timer.tick(time.delta());
         if timer.just_finished() {
-            let (index_offset, col_length) = info.location();
             let texture_atlas = texture_atlases.get(texture_atlas_handle).unwrap();
-            println!("index_offset: {} col_length: {}", index_offset, col_length);
-            sprite.index = ((sprite.index + 1) % col_length) + index_offset;
+            sprite.index = info.next_index(sprite.index)
         }
 
         //This may be a naive approach but it might jsut work for what we need, and it would be tedious to create 2 copies of every sprite
-        // if velocity.linvel.x < 0.0 {
-        //     sprite.flip_x = true;
-        // } else {
-        //     sprite.flip_x = false;
-        // }
+        if info.is_flip() {
+            sprite.flip_x = true;
+        } else {
+            sprite.flip_x = false;
+        }
     }
 }

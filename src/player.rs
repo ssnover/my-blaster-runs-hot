@@ -51,7 +51,7 @@ fn player_spawn_system(
     // let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.00), 1, 8);
     // let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let texture_handle =
-        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Blue/Blue_Soldier.png");
+        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Blue/Blue_Soldier_50.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(50.0, 50.0), 8, 5);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
@@ -96,6 +96,7 @@ fn player_spawn_system(
         })
         .insert(PlayerAnimationInfo {
             state: PlayerState::Idle,
+            is_flip: false,
         })
         .insert(Direction { is_right: true });
 }
@@ -141,12 +142,18 @@ fn player_move_system(
             is_jump = true;
         }
         if keys.pressed(KeyCode::C) {
-            is_crouch = false;
+            is_crouch = true;
         }
     }
 
     for (mut player_entity, mut velocity, player, mut player_state) in players.get_single_mut() {
         *velocity = Velocity::linear(player_vel * PLAYER_SPEED);
+        if (velocity.linvel.x < 0.0) {
+            player_state.is_flip = true;
+        } else if (velocity.linvel.x > 0.0) {
+            player_state.is_flip = false;
+        }
+
         if (velocity.linvel == Vec2 { x: 0.0, y: 0.0 }) {
             player_state.state = PlayerState::Idle;
         } else {
