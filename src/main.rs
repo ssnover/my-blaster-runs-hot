@@ -62,7 +62,7 @@ fn main() {
         .add_plugin(rounds::RoundManagerPlugin)
         .add_plugin(spawn_manager::SpawnManagerPlugin)
         .add_plugin(ui::UiPlugin)
-        //.add_plugin(GameOverMenuPlugin)
+        .add_plugin(GameOverMenuPlugin)
         //.add_plugin(WorldInspectorPlugin::new())
         //startup system
         .add_startup_system(setup_system)

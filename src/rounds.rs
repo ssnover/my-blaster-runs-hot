@@ -98,7 +98,6 @@ fn start_round_system(
     mut send_populate_queue: EventWriter<PopulateQueueEvent>,
 ) {
     send_populate_queue.send(PopulateQueueEvent {});
-    println!("here in start round");
 }
 
 fn populate_spawn_queue_system(
@@ -107,8 +106,6 @@ fn populate_spawn_queue_system(
     mut round_tracker: ResMut<RoundTracker>,
 ) {
     if populate_queue_events.len() > 0 {
-        println!("I was called");
-
         if (spawn_queue.len() == 0) {
             let round_data = round_tracker.current_round_data().unwrap();
             for _ in 0..round_data.number_of_civilians {
@@ -118,7 +115,6 @@ fn populate_spawn_queue_system(
                 spawn_queue.push_back(SpawnType::Crab);
             }
         }
-        println!("spawn_queue.len(): {}", spawn_queue.len());
         populate_queue_events.clear();
     }
 }

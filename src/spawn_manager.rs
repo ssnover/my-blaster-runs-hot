@@ -28,6 +28,7 @@ fn spawn_manager_system(
     win_size: Res<WindowSize>,
     game_textures: Res<GameTextures>,
     query: Query<(), Or<(With<Civilian>, With<Enemy>)>>,
+    mut state: ResMut<State<GameState>>,
 
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
@@ -37,8 +38,10 @@ fn spawn_manager_system(
     let number_of_spawns = query.iter().count();
 
     if spawn_queue.len() == 0 && number_of_spawns == 0 {
-        round_tracker.next_round();
-        println!("here in spawn manage");
+        if (!round_tracker.next_round()) {
+            state.push(GameState::GameOver).unwrap();
+            println!("Should be work");
+        }
         send_populate_queue.send(PopulateQueueEvent {});
     }
 
