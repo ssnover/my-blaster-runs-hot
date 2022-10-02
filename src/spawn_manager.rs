@@ -43,15 +43,15 @@ fn spawn_manager_system(
     }
 
     let texture_handle_crab =
-        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Red/Gunner_Red_Run.png");
+        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Red/Red_Soldier.png");
     let texture_atlas_crab =
-        TextureAtlas::from_grid(texture_handle_crab, Vec2::new(48.0, 48.0), 6, 1);
+        TextureAtlas::from_grid(texture_handle_crab, Vec2::new(50.0, 50.0), 8, 5);
     let texture_atlas_handle_crab = texture_atlases.add(texture_atlas_crab);
 
     let texture_handle_civ =
-        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Green/Gunner_Green_Run.png");
+        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Green/Green_Soldier.png");
     let texture_atlas_civ =
-        TextureAtlas::from_grid(texture_handle_civ, Vec2::new(48.0, 48.0), 6, 1);
+        TextureAtlas::from_grid(texture_handle_civ, Vec2::new(50.0, 50.0), 8, 5);
     let texture_atlas_handle_civ = texture_atlases.add(texture_atlas_civ);
 
     if current_max_spawns > number_of_spawns {

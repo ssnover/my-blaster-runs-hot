@@ -9,13 +9,13 @@ use crate::components::{
     AnimationTimer, AreaOfEffect, Enemy, FromPlayer, Health, Lives, LivingBeing, Player, WeaponData,
 };
 use crate::constants::{
-    ENEMY_GROUP, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPRITE_SCALE, PHYSICAL_GROUP,
-    PLAYER_ATTRACTION_FORCE, PLAYER_GROUP, PLAYER_HEIGHT, PLAYER_SPEED, PLAYER_SPRITE_SCALE,
-    PLAYER_WIDTH, TIME_STEP,
+    ENEMY_GROUP, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPEED, ENEMY_SPRITE_SCALE,
+    PHYSICAL_GROUP, PLAYER_ATTRACTION_FORCE, PLAYER_GROUP, PLAYER_HEIGHT, PLAYER_SPEED,
+    PLAYER_SPRITE_SCALE, PLAYER_WIDTH, TIME_STEP,
 };
 use crate::projectile_collision::{KnockBackEvent, LivingBeingDeathEvent, LivingBeingHitEvent};
 use crate::resources::{GameTextures, WindowSize};
-use crate::states::GameState;
+use crate::states::{EnemyAnimationInfo, EnemyState, GameState};
 use crate::utils::{normalize_vec2, CooldownTimer};
 use crate::{blaster, PlayerScore};
 
@@ -30,7 +30,8 @@ impl Plugin for EnemyPlugin {
             .add_system_set(
                 SystemSet::on_update(GameState::MainGame)
                     .with_system(enemy_ai_system)
-                    .with_system(enemy_blaster_system),
+                    .with_system(enemy_blaster_system)
+                    .with_system(enemy_state_system),
             );
     }
 }
@@ -74,6 +75,12 @@ pub fn spawn_crab(
         .insert(Health { health: 1 })
         .insert(Lives { lives_num: 1 })
         .insert(Enemy)
+        .insert(EnemyAnimationInfo {
+            state: EnemyState::Idle,
+            is_flip: false,
+        })
+        // .insert(Direction { is_right: true }); - This was supposed to be a concept for moving up down left and right each direction having different
+        // sprites. Just gna make it a jira issue for now
         .insert(WeaponData {
             firing: true,
             ..Default::default()
@@ -89,8 +96,8 @@ fn enemy_spawn_system(
     let mut rng = rand::thread_rng();
 
     let texture_handle =
-        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Red/Gunner_Red_Run.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(48.0, 48.0), 6, 1);
+        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Red/Red_Soldier.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(50.0, 50.0), 8, 5);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
     // Add the enemy
@@ -119,7 +126,26 @@ fn enemy_ai_system(
             player_tf.translation.y - enemy_tf.translation.y,
         );
 
-        enemy_velocity.linvel = position_diff.normalize() * 0.0;
+        enemy_velocity.linvel = position_diff.normalize() * ENEMY_SPEED;
+    }
+}
+
+fn enemy_state_system(
+    mut cmds: Commands,
+    mut enemy_query: Query<(Entity, &Velocity, &mut EnemyAnimationInfo), With<Enemy>>,
+) {
+    for (mut enemy_entity, mut velocity, mut enemy_state) in enemy_query.get_single_mut() {
+        if (velocity.linvel.x < 0.0) {
+            enemy_state.is_flip = true;
+        } else if (velocity.linvel.x > 0.0) {
+            enemy_state.is_flip = false;
+        }
+
+        if (velocity.linvel == Vec2 { x: 0.0, y: 0.0 }) {
+            enemy_state.state = EnemyState::Idle;
+        } else {
+            enemy_state.state = EnemyState::Run;
+        }
     }
 }
 

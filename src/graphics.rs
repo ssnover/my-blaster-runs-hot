@@ -7,7 +7,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     components::{AnimationTimer, Direction},
-    states::{EnemyAnimationInfo, PlayerAnimationInfo, SpriteLocation},
+    states::{CivilianAnimationInfo, EnemyAnimationInfo, PlayerAnimationInfo, SpriteLocation},
 };
 
 pub struct AnimationPlugin;
@@ -16,6 +16,7 @@ impl Plugin for AnimationPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(animation_system::<PlayerAnimationInfo>);
         app.add_system(animation_system::<EnemyAnimationInfo>);
+        app.add_system(animation_system::<CivilianAnimationInfo>);
     }
 }
 

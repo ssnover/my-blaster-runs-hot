@@ -47,9 +47,6 @@ fn player_spawn_system(
 ) {
     rapier_config.gravity = Vec2::ZERO;
 
-    // let texture_handle = asset_server.load("darians-assets/Ball and Chain Bot/run.png");
-    // let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(126.0, 39.00), 1, 8);
-    // let texture_atlas_handle = texture_atlases.add(texture_atlas);
     let texture_handle =
         asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Blue/Blue_Soldier_50.png");
     let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(50.0, 50.0), 8, 5);
@@ -78,8 +75,8 @@ fn player_spawn_system(
         .insert(ColliderMassProperties::Density(1.0))
         .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(CollisionGroups::new(
-            (PLAYER_GROUP | CIVILLIAN_GROUP | PHYSICAL_GROUP),
-            (PLAYER_GROUP | CIVILLIAN_GROUP | PHYSICAL_GROUP),
+            (PLAYER_GROUP | CIVILIAN_GROUP | PHYSICAL_GROUP),
+            (PLAYER_GROUP | CIVILIAN_GROUP | PHYSICAL_GROUP),
         ))
         //Custom functionality
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
@@ -146,6 +143,7 @@ fn player_move_system(
         }
     }
 
+    //Break this out into a seperate system
     for (mut player_entity, mut velocity, player, mut player_state) in players.get_single_mut() {
         *velocity = Velocity::linear(player_vel * PLAYER_SPEED);
         if (velocity.linvel.x < 0.0) {

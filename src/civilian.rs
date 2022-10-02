@@ -6,11 +6,11 @@ use rand::Rng;
 
 use crate::components::{AnimationTimer, Civilian, LivingBeing, Player};
 use crate::constants::{
-    CIVILLIAN_GROUP, PLAYER_HEIGHT, PLAYER_SPEED, PLAYER_SPRITE_SCALE, PLAYER_WIDTH,
+    CIVILIAN_GROUP, PLAYER_HEIGHT, PLAYER_SPEED, PLAYER_SPRITE_SCALE, PLAYER_WIDTH,
 };
 use crate::projectile_collision::LivingBeingHitEvent;
 use crate::resources::{PlayerScore, WindowSize};
-use crate::states::GameState;
+use crate::states::{CivilianAnimationInfo, CivilianState, GameState};
 
 pub struct CivilianPlugin;
 
@@ -19,7 +19,8 @@ impl Plugin for CivilianPlugin {
         app.add_system_set(
             SystemSet::on_update(GameState::MainGame)
                 .with_system(civilian_ai_system)
-                .with_system(civilian_despawn_system),
+                .with_system(civilian_despawn_system)
+                .with_system(civilian_state_system),
         );
     }
 }
@@ -51,11 +52,34 @@ pub fn spawn_civilian(
         .insert(Collider::cuboid(PLAYER_WIDTH, PLAYER_HEIGHT))
         .insert(ActiveCollisionTypes::all())
         .insert(ActiveEvents::COLLISION_EVENTS)
-        .insert(CollisionGroups::new(CIVILLIAN_GROUP, CIVILLIAN_GROUP))
+        .insert(CollisionGroups::new(CIVILIAN_GROUP, CIVILIAN_GROUP))
         //Custom Functionality
         .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
         .insert(LivingBeing)
+        .insert(CivilianAnimationInfo {
+            state: CivilianState::Idle,
+            is_flip: false,
+        })
         .insert(Civilian);
+}
+
+fn civilian_state_system(
+    mut cmds: Commands,
+    mut civilian_query: Query<(Entity, &Velocity, &mut CivilianAnimationInfo), With<Civilian>>,
+) {
+    for (mut civilian_entity, mut velocity, mut civilian_state) in civilian_query.get_single_mut() {
+        if (velocity.linvel.x < 0.0) {
+            civilian_state.is_flip = true;
+        } else if (velocity.linvel.x > 0.0) {
+            civilian_state.is_flip = false;
+        }
+
+        if (velocity.linvel == Vec2 { x: 0.0, y: 0.0 }) {
+            civilian_state.state = CivilianState::Idle;
+        } else {
+            civilian_state.state = CivilianState::Run;
+        }
+    }
 }
 
 fn spawn_civilian_system(
@@ -68,8 +92,8 @@ fn spawn_civilian_system(
     let mut num_civilians = 5;
 
     let texture_handle =
-        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Green/Gunner_Green_Run.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(48.0, 48.0), 6, 1);
+        asset_server.load("darians-assets/TeamGunner/CHARACTER_SPRITES/Green/Green_Soldier.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(50.0, 50.0), 8, 5);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
     for a in 0..num_civilians {
@@ -105,7 +129,7 @@ fn civilian_ai_system(
 
 fn civilian_despawn_system(
     mut cmds: Commands,
-    mut send_civillian_hit: EventWriter<LivingBeingHitEvent>,
+    mut send_civilian_hit: EventWriter<LivingBeingHitEvent>,
     civilian_query: Query<Entity, With<Civilian>>,
     player_query: Query<Entity, With<Player>>,
     mut score: ResMut<PlayerScore>,
@@ -118,11 +142,11 @@ fn civilian_despawn_system(
                 let first = *first;
                 let second = *second;
                 if flags == &CollisionEventFlags::empty() {
-                    for (civillian) in civilian_query.iter() {
+                    for (civilian) in civilian_query.iter() {
                         //I think this will work because there is only 1 player, I guess this would work with more than 1 player
                         if ((first == player) ^ (second == player)) {
-                            if ((first == civillian) ^ (second == civillian)) {
-                                cmds.entity(civillian).despawn_recursive();
+                            if ((first == civilian) ^ (second == civilian)) {
+                                cmds.entity(civilian).despawn_recursive();
                                 score.0 += 100;
                                 println!("Current Score: {}", score.0);
                             }

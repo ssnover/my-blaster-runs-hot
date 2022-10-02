@@ -60,7 +60,7 @@ fn main() {
         .add_plugin(enemy::EnemyPlugin)
         .add_plugin(projectile_collision::CollisionPlugin)
         .add_plugin(rounds::RoundManagerPlugin)
-        //.add_plugin(spawn_manager::SpawnManagerPlugin)
+        .add_plugin(spawn_manager::SpawnManagerPlugin)
         .add_plugin(ui::UiPlugin)
         //.add_plugin(GameOverMenuPlugin)
         //.add_plugin(WorldInspectorPlugin::new())
