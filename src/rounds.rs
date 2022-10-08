@@ -43,7 +43,6 @@ impl RoundTracker {
             current_round: None,
             round_data: parse_round_spawns(PathBuf::from("assets/round_data.txt")).unwrap(),
         };
-        println!("{:?}", tracker.current_round_data());
         tracker.current_round = Some(0);
         tracker
     }

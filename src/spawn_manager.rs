@@ -40,7 +40,6 @@ fn spawn_manager_system(
     if spawn_queue.len() == 0 && number_of_spawns == 0 {
         if (!round_tracker.next_round()) {
             state.push(GameState::GameOver).unwrap();
-            println!("Should be work");
         }
         send_populate_queue.send(PopulateQueueEvent {});
     }

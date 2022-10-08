@@ -31,7 +31,8 @@ impl Plugin for EnemyPlugin {
                 SystemSet::on_update(GameState::MainGame)
                     .with_system(enemy_ai_system)
                     .with_system(enemy_blaster_system)
-                    .with_system(enemy_state_system),
+                    .with_system(enemy_state_system)
+                    .with_system(enemy_dying),
             );
     }
 }
@@ -181,3 +182,5 @@ fn enemy_blaster_system(
         }
     }
 }
+
+fn enemy_dying() {}

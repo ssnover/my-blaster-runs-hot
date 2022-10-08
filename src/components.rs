@@ -23,6 +23,9 @@ pub struct Direction {
 }
 
 #[derive(Component)]
+pub struct Dead;
+
+#[derive(Component)]
 pub struct Enemy;
 
 #[derive(Component)]

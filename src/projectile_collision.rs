@@ -34,41 +34,33 @@ pub struct KnockBackEvent {
 }
 
 pub fn on_living_being_hit(
+    mut commands: Commands,
     mut living_being_hit_events: EventReader<LivingBeingHitEvent>,
     mut send_living_being_death: EventWriter<LivingBeingDeathEvent>,
     mut living_being: Query<(Entity, &mut Health), With<LivingBeing>>,
 ) {
     for event in living_being_hit_events.iter() {
-        println!("In on_living_being_hit");
-
         for (being, mut health) in living_being.iter_mut() {
             if (being == event.entity) {
-                println!("Found the entity hit");
-                println!("health before damage: {}", health.health);
-
                 health.health = health.health.saturating_sub(event.damage);
-                println!("damage: {}", event.damage);
-                println!("health: {}", health.health);
             }
 
             if health.health == 0 {
-                send_living_being_death.send(LivingBeingDeathEvent {
-                    entity: event.entity,
-                })
+                commands.entity(entity).insert(Dead);
             }
         }
     }
 }
 
 //MAYBE SEND A SPECIAL DEATH EVENT FOR PLAYERS SO I CAN INITIALIZE I-FRAME SEQUENCE
+commands.entity(entity).insert(Dieing {remaining_time: time, dead: false, dispose: false});
+
 pub fn on_living_being_dead(
     mut living_being_death_events: EventReader<LivingBeingDeathEvent>,
     mut commands: Commands,
     mut living_being: Query<(Entity, &mut Lives, &mut Health), With<LivingBeing>>,
 ) {
     for event in living_being_death_events.iter() {
-        println!("In on_living_being_dead");
-
         for (being, mut lives, mut health) in living_being.iter_mut() {
             if (being == event.entity) {
                 lives.lives_num = lives.lives_num.saturating_sub(1);
@@ -87,12 +79,8 @@ pub fn on_knock_back(
     mut living_being: Query<(Entity, &mut ExternalImpulse), With<LivingBeing>>,
 ) {
     for event in knockback_events.iter() {
-        println!("In on_knock_back");
-
         for (being, mut ext_impulse) in living_being.iter_mut() {
-            println! {"being: {}, event.entity: {}", being.id(), event.entity.id()}
             if (being == event.entity) {
-                println! {"event.direction: {}", event.direction}
                 ext_impulse.impulse = event.direction.normalize() * KNOCKBACK_POWER;
             }
         }

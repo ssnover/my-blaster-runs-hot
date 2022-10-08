@@ -148,7 +148,6 @@ fn civilian_despawn_system(
                             if ((first == civilian) ^ (second == civilian)) {
                                 cmds.entity(civilian).despawn_recursive();
                                 score.0 += 100;
-                                println!("Current Score: {}", score.0);
                             }
                         }
                     }
