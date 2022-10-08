@@ -23,7 +23,13 @@ pub struct Direction {
 }
 
 #[derive(Component)]
-pub struct Dead;
+pub struct Dead {
+    pub time_till_dispose: CooldownTimer,
+    pub dying: bool,
+}
+
+#[derive(Component)]
+pub struct Dispose;
 
 #[derive(Component)]
 pub struct Enemy;

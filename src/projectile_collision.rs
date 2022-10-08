@@ -2,9 +2,10 @@ use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use bevy_rapier2d::prelude::*;
 
-use crate::components::{Enemy, FromPlayer, Health, Lives, LivingBeing, Player};
+use crate::components::{Dead, Enemy, FromPlayer, Health, Lives, LivingBeing, Player};
 use crate::constants::{KNOCKBACK_POWER, PLAYER_HEALTH};
 use crate::states::GameState;
+use crate::utils::CooldownTimer;
 pub struct CollisionPlugin;
 
 impl Plugin for CollisionPlugin {
@@ -12,7 +13,6 @@ impl Plugin for CollisionPlugin {
         app.add_system_set(
             SystemSet::on_update(GameState::MainGame)
                 .with_system(on_living_being_hit)
-                .with_system(on_living_being_dead)
                 .with_system(on_knock_back),
         );
     }
@@ -46,29 +46,10 @@ pub fn on_living_being_hit(
             }
 
             if health.health == 0 {
-                commands.entity(entity).insert(Dead);
-            }
-        }
-    }
-}
-
-//MAYBE SEND A SPECIAL DEATH EVENT FOR PLAYERS SO I CAN INITIALIZE I-FRAME SEQUENCE
-commands.entity(entity).insert(Dieing {remaining_time: time, dead: false, dispose: false});
-
-pub fn on_living_being_dead(
-    mut living_being_death_events: EventReader<LivingBeingDeathEvent>,
-    mut commands: Commands,
-    mut living_being: Query<(Entity, &mut Lives, &mut Health), With<LivingBeing>>,
-) {
-    for event in living_being_death_events.iter() {
-        for (being, mut lives, mut health) in living_being.iter_mut() {
-            if (being == event.entity) {
-                lives.lives_num = lives.lives_num.saturating_sub(1);
-                health.health = PLAYER_HEALTH;
-            }
-
-            if lives.lives_num == 0 {
-                commands.entity(being).despawn_recursive();
+                commands.entity(event.entity).insert(Dead {
+                    time_till_dispose: CooldownTimer::from_seconds(0.5),
+                    dying: false,
+                });
             }
         }
     }

@@ -6,7 +6,8 @@ use rand::Rng;
 
 use crate::blaster::BlasterFiredEvent;
 use crate::components::{
-    AnimationTimer, AreaOfEffect, Enemy, FromPlayer, Health, Lives, LivingBeing, Player, WeaponData,
+    AnimationTimer, AreaOfEffect, Dead, Dispose, Enemy, FromPlayer, Health, Lives, LivingBeing,
+    Player, WeaponData,
 };
 use crate::constants::{
     ENEMY_GROUP, ENEMY_REPULSION_FORCE, ENEMY_REPULSION_RADIUS, ENEMY_SPEED, ENEMY_SPRITE_SCALE,
@@ -32,7 +33,8 @@ impl Plugin for EnemyPlugin {
                     .with_system(enemy_ai_system)
                     .with_system(enemy_blaster_system)
                     .with_system(enemy_state_system)
-                    .with_system(enemy_dying),
+                    .with_system(enemy_dying)
+                    .with_system(despawn_dispose),
             );
     }
 }
@@ -116,7 +118,7 @@ fn enemy_spawn_system(
 
 fn enemy_ai_system(
     mut cmds: Commands,
-    mut enemy_query: Query<(Entity, &mut Velocity, &Transform), With<Enemy>>,
+    mut enemy_query: Query<(Entity, &mut Velocity, &Transform), (With<Enemy>, Without<Dead>)>,
     player_query: Query<(&Transform), With<Player>>,
 ) {
     let player_tf = player_query.get_single().unwrap();
@@ -133,7 +135,10 @@ fn enemy_ai_system(
 
 fn enemy_state_system(
     mut cmds: Commands,
-    mut enemy_query: Query<(Entity, &Velocity, &mut EnemyAnimationInfo), With<Enemy>>,
+    mut enemy_query: Query<
+        (Entity, &Velocity, &mut EnemyAnimationInfo),
+        (With<Enemy>, Without<Dead>),
+    >,
 ) {
     for (mut enemy_entity, mut velocity, mut enemy_state) in enemy_query.get_single_mut() {
         if (velocity.linvel.x < 0.0) {
@@ -152,7 +157,7 @@ fn enemy_state_system(
 
 fn enemy_blaster_system(
     mut cmds: Commands,
-    mut enemy_query: Query<(Entity, &Transform, &mut WeaponData), With<Enemy>>,
+    mut enemy_query: Query<(Entity, &Transform, &mut WeaponData), (With<Enemy>, Without<Dead>)>,
     mut send_fire_event: EventWriter<BlasterFiredEvent>,
     player_query: Query<(&Transform), With<Player>>,
     time: Res<Time>,
@@ -183,4 +188,32 @@ fn enemy_blaster_system(
     }
 }
 
-fn enemy_dying() {}
+//Fix the dead tag to be inside the with
+fn enemy_dying(
+    mut enemy_query: Query<
+        (Entity, &mut EnemyAnimationInfo, &mut Velocity, &mut Dead),
+        (With<(Enemy)>, Without<Dispose>),
+    >,
+    mut commands: Commands,
+    time: Res<Time>,
+) {
+    for (enemy, mut enemy_state, mut velocity, mut dead) in enemy_query.iter_mut() {
+        enemy_state.state = EnemyState::Death;
+        velocity.linvel = Vec2::new(0.0, 0.0);
+        if (!dead.dying) {
+            dead.dying = true;
+            dead.time_till_dispose.trigger();
+        }
+        dead.time_till_dispose.tick(time.delta());
+
+        if (dead.time_till_dispose.ready()) {
+            commands.entity(enemy).insert(Dispose);
+        }
+    }
+}
+
+fn despawn_dispose(mut commands: Commands, mut disposables: Query<Entity, With<Dispose>>) {
+    for entity in disposables.iter_mut() {
+        commands.entity(entity).despawn_recursive();
+    }
+}
