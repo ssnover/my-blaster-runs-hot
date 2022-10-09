@@ -318,7 +318,6 @@ fn player_dying(
 
         if (dead.time_till_dispose.ready()) {
             if lives.lives_num == 0 {
-                commands.entity(player).insert(Dispose);
                 state.push(GameState::GameOver).unwrap();
             } else {
                 lives.lives_num = lives.lives_num.saturating_sub(1);
@@ -327,13 +326,4 @@ fn player_dying(
             }
         }
     }
-}
-
-fn player_dead(
-    mut commands: Commands,
-    mut player_query: Query<
-        (Entity, &mut PlayerAnimationInfo, &mut Velocity, &mut Dead),
-        (With<(Enemy)>, Without<Dispose>),
-    >,
-) {
 }
