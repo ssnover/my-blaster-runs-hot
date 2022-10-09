@@ -9,7 +9,7 @@ pub const ENEMY_REPULSION_RADIUS: f32 = 10.0;
 pub const ENEMY_REPULSION_FORCE: f32 = 1.0;
 pub const PLAYER_ATTRACTION_FORCE: f32 = 3.0;
 pub const PLAYER_HEALTH: u32 = 3;
-pub const PLAYER_LIVES: u32 = 5;
+pub const PLAYER_LIVES: u32 = 3;
 pub const ENEMY_SPEED: f32 = 100.0;
 
 //Blaster Constants

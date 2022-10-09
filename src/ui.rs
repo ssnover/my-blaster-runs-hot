@@ -15,6 +15,9 @@ impl Plugin for UiPlugin {
                     .with_system(update_score_system)
                     .with_system(update_lives_system)
                     .with_system(update_round_system),
+            )
+            .add_system_set(
+                SystemSet::on_update(GameState::GameOver).with_system(update_score_system),
             );
     }
 }

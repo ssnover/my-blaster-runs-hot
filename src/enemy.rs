@@ -33,8 +33,7 @@ impl Plugin for EnemyPlugin {
                     .with_system(enemy_ai_system)
                     .with_system(enemy_blaster_system)
                     .with_system(enemy_state_system)
-                    .with_system(enemy_dying)
-                    .with_system(despawn_dispose),
+                    .with_system(enemy_dying),
             );
     }
 }
@@ -209,11 +208,5 @@ fn enemy_dying(
         if (dead.time_till_dispose.ready()) {
             commands.entity(enemy).insert(Dispose);
         }
-    }
-}
-
-fn despawn_dispose(mut commands: Commands, mut disposables: Query<Entity, With<Dispose>>) {
-    for entity in disposables.iter_mut() {
-        commands.entity(entity).despawn_recursive();
     }
 }

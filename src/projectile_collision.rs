@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use bevy_rapier2d::prelude::*;
 
-use crate::components::{Dead, Enemy, FromPlayer, Health, Lives, LivingBeing, Player};
+use crate::components::{Dead, Dispose, Enemy, FromPlayer, Health, Lives, LivingBeing, Player};
 use crate::constants::{KNOCKBACK_POWER, PLAYER_HEALTH};
 use crate::states::GameState;
 use crate::utils::CooldownTimer;
@@ -13,7 +13,8 @@ impl Plugin for CollisionPlugin {
         app.add_system_set(
             SystemSet::on_update(GameState::MainGame)
                 .with_system(on_living_being_hit)
-                .with_system(on_knock_back),
+                .with_system(on_knock_back)
+                .with_system(despawn_dispose),
         );
     }
 }
@@ -37,7 +38,7 @@ pub fn on_living_being_hit(
     mut commands: Commands,
     mut living_being_hit_events: EventReader<LivingBeingHitEvent>,
     mut send_living_being_death: EventWriter<LivingBeingDeathEvent>,
-    mut living_being: Query<(Entity, &mut Health), With<LivingBeing>>,
+    mut living_being: Query<(Entity, &mut Health), (With<LivingBeing>, Without<Dead>)>,
 ) {
     for event in living_being_hit_events.iter() {
         for (being, mut health) in living_being.iter_mut() {
@@ -65,6 +66,12 @@ pub fn on_knock_back(
                 ext_impulse.impulse = event.direction.normalize() * KNOCKBACK_POWER;
             }
         }
+    }
+}
+
+fn despawn_dispose(mut commands: Commands, mut disposables: Query<Entity, With<Dispose>>) {
+    for entity in disposables.iter_mut() {
+        commands.entity(entity).despawn_recursive();
     }
 }
 

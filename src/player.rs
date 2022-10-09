@@ -2,13 +2,14 @@ use std::sync::{Arc, Mutex};
 
 use bevy::math::vec2;
 use bevy::prelude::*;
+use bevy_rapier2d::dynamics::*;
 use bevy_rapier2d::prelude::*;
 use bevy_rapier2d::rapier::prelude::CollisionEventFlags;
 use nalgebra::{vector, Vector2};
 
 use crate::blaster::BlasterFiredEvent;
 use crate::components::{
-    AnimationTimer, Direction, Enemy, Health, Lives, LivingBeing, Player, WeaponData,
+    AnimationTimer, Dead, Direction, Dispose, Enemy, Health, Lives, LivingBeing, Player, WeaponData,
 };
 use crate::constants::*; //Should probably fix this, it's a little lazy
 use crate::debug;
@@ -33,7 +34,8 @@ impl Plugin for PlayerPlugin {
                     .with_system(player_move_system)
                     .with_system(player_fire_aim_system)
                     .with_system(collision_with_enemy)
-                    .with_system(display_lives_ui),
+                    .with_system(display_lives_ui)
+                    .with_system(player_dying),
             );
     }
 }
@@ -99,7 +101,7 @@ fn player_spawn_system(
 }
 
 fn player_move_system(
-    mut players: Query<(Entity, &mut Velocity, &Player, &mut PlayerAnimationInfo)>,
+    mut players: Query<(Entity, &mut Velocity, &Player, &mut PlayerAnimationInfo), Without<Dead>>,
 
     controller: Option<Res<Controller>>,
     axes: Res<Axis<GamepadAxis>>,
@@ -144,6 +146,7 @@ fn player_move_system(
     }
 
     //Break this out into a seperate system
+    //Also should this just not be in a for loop????:
     for (mut player_entity, mut velocity, player, mut player_state) in players.get_single_mut() {
         *velocity = Velocity::linear(player_vel * PLAYER_SPEED);
         if (velocity.linvel.x < 0.0) {
@@ -170,7 +173,7 @@ fn player_fire_aim_system(
     time: Res<Time>,
     mut blaster_heat: ResMut<BlasterHeat>,
 
-    mut player: Query<(Entity, &Transform, &mut WeaponData, &mut Direction), With<Player>>,
+    mut player: Query<(Entity, &Transform, &mut WeaponData, &mut Direction), (With<Player>)>,
 
     mut send_fire_event: EventWriter<BlasterFiredEvent>,
 
@@ -246,7 +249,7 @@ fn player_fire_aim_system(
 pub fn collision_with_enemy(
     mut send_player_hit: EventWriter<LivingBeingDeathEvent>,
     mut send_knockback_event: EventWriter<KnockBackEvent>,
-    player_query: Query<(Entity, &Lives, &Transform), With<Player>>,
+    player_query: Query<(Entity, &Lives, &Transform), (With<Player>, Without<Dead>)>,
     enemy_query: Query<(Entity, &Transform), With<Enemy>>,
     mut collision_events: EventReader<CollisionEvent>,
 ) {
@@ -287,4 +290,50 @@ pub fn display_lives_ui(
 ) {
     let curr_lives = player_query.get_single().unwrap();
     res_lives.0 = curr_lives.lives_num;
+}
+
+//commands.entity(entity).remove::<Component>()
+fn player_dying(
+    mut player_query: Query<
+        (
+            Entity,
+            &mut PlayerAnimationInfo,
+            &mut Dead,
+            &mut Lives,
+            &mut Health,
+        ),
+        (With<(Player)>, Without<Dispose>),
+    >,
+    mut commands: Commands,
+    time: Res<Time>,
+    mut state: ResMut<State<GameState>>,
+) {
+    for (player, mut player_state, mut dead, mut lives, mut health) in player_query.iter_mut() {
+        player_state.state = PlayerState::Death;
+        if (!dead.dying) {
+            dead.dying = true;
+            dead.time_till_dispose.trigger();
+        }
+        dead.time_till_dispose.tick(time.delta());
+
+        if (dead.time_till_dispose.ready()) {
+            if lives.lives_num == 0 {
+                commands.entity(player).insert(Dispose);
+                state.push(GameState::GameOver).unwrap();
+            } else {
+                lives.lives_num = lives.lives_num.saturating_sub(1);
+                health.health = PLAYER_HEALTH;
+                commands.entity(player).remove::<Dead>();
+            }
+        }
+    }
+}
+
+fn player_dead(
+    mut commands: Commands,
+    mut player_query: Query<
+        (Entity, &mut PlayerAnimationInfo, &mut Velocity, &mut Dead),
+        (With<(Enemy)>, Without<Dispose>),
+    >,
+) {
 }
