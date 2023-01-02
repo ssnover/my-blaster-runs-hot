@@ -29,6 +29,9 @@ pub struct Controller(pub Gamepad);
 #[derive(Deref, DerefMut)]
 pub struct PlayerScore(pub usize);
 
+#[derive(Deref, DerefMut)]
+pub struct PlayerLives(pub u32);
+
 pub struct BlasterHeat {
     pub value: f32,
     pub overheat_cooldown_timer: CooldownTimer,

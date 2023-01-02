@@ -1,9 +1,11 @@
 use bevy::prelude::*;
 use serde::Deserialize;
+use std::collections::VecDeque;
 use std::path::PathBuf;
 
 use crate::components::{Civilian, Enemy};
 use crate::resources::{SpawnQueue, SpawnType};
+use crate::spawn_manager::NewRoundEvent;
 use crate::states::GameState;
 
 #[derive(Copy, Clone, Debug, Deserialize)]
@@ -15,6 +17,8 @@ pub struct RoundSpawns {
     pub number_of_tanks: u32,
     pub number_of_exploders: u32,
 }
+
+pub struct PopulateQueueEvent {}
 
 fn parse_round_spawns(
     round_spawn_path: PathBuf,
@@ -39,21 +43,18 @@ impl RoundTracker {
             current_round: None,
             round_data: parse_round_spawns(PathBuf::from("assets/round_data.txt")).unwrap(),
         };
-        println!("{:?}", tracker.current_round_data());
-        tracker.next_round();
+        tracker.current_round = Some(0);
         tracker
     }
 
     pub fn next_round(&mut self) -> bool {
         if let Some(mut current_round) = self.current_round {
             current_round += 1;
+            self.current_round = Some(current_round);
             if current_round as usize >= self.number_of_rounds() {
                 return false;
             }
-        } else {
-            self.current_round = Some(0)
         }
-
         true
     }
 
@@ -74,28 +75,37 @@ pub struct RoundManagerPlugin;
 
 impl Plugin for RoundManagerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_enter(GameState::MainGame).with_system(start_round_system),
-        )
-        .add_system_set(
-            SystemSet::on_update(GameState::MainGame).with_system(round_manager_system),
-        );
+        app.add_event::<PopulateQueueEvent>()
+            .add_event::<NewRoundEvent>()
+            .add_startup_system(insert_startup_resources)
+            .add_system_set(
+                SystemSet::on_enter(GameState::MainGame).with_system(start_round_system),
+            )
+            .add_system_set(
+                SystemSet::on_update(GameState::MainGame).with_system(populate_spawn_queue_system),
+            );
     }
 }
 
-fn start_round_system(mut cmds: Commands) {
+fn insert_startup_resources(mut cmds: Commands) {
+    cmds.insert_resource(SpawnQueue(VecDeque::new()));
     cmds.insert_resource(RoundTracker::start());
 }
 
-fn round_manager_system(
+fn start_round_system(
+    mut cmds: Commands,
+    mut send_populate_queue: EventWriter<PopulateQueueEvent>,
+) {
+    send_populate_queue.send(PopulateQueueEvent {});
+}
+
+fn populate_spawn_queue_system(
+    mut populate_queue_events: EventReader<PopulateQueueEvent>,
     mut spawn_queue: ResMut<SpawnQueue>,
     mut round_tracker: ResMut<RoundTracker>,
-    query: Query<(), Or<(With<Enemy>, With<Civilian>)>>,
 ) {
-    let spawn_count: usize = query.iter().count();
-
-    if spawn_queue.len() == 0 && spawn_count == 0 {
-        if round_tracker.next_round() {
+    if populate_queue_events.len() > 0 {
+        if (spawn_queue.len() == 0) {
             let round_data = round_tracker.current_round_data().unwrap();
             for _ in 0..round_data.number_of_civilians {
                 spawn_queue.push_back(SpawnType::Civilian);
@@ -104,5 +114,6 @@ fn round_manager_system(
                 spawn_queue.push_back(SpawnType::Crab);
             }
         }
+        populate_queue_events.clear();
     }
 }

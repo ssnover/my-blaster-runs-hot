@@ -1,87 +1,87 @@
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
+use bevy_rapier2d::prelude::*;
 
-use crate::components::{Enemy, FromPlayer, Moveable, Player, Projectile, Size, Velocity};
+use crate::components::{Dead, Dispose, Enemy, FromPlayer, Health, Lives, LivingBeing, Player};
+use crate::constants::{KNOCKBACK_POWER, PLAYER_HEALTH};
 use crate::states::GameState;
+use crate::utils::CooldownTimer;
 pub struct CollisionPlugin;
 
 impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
             SystemSet::on_update(GameState::MainGame)
-                .with_system(projectile_collision_and_score_system),
+                .with_system(on_living_being_hit)
+                .with_system(on_knock_back)
+                .with_system(despawn_dispose),
         );
     }
 }
-pub fn projectile_collision_and_score_system(
+
+//MAYBE REWRITE THIS TO TAKE DAMAGE, HEALTH AND LIVES
+pub struct LivingBeingHitEvent {
+    pub entity: Entity,
+    pub damage: u32,
+}
+
+pub struct LivingBeingDeathEvent {
+    pub entity: Entity,
+}
+
+pub struct KnockBackEvent {
+    pub entity: Entity,
+    pub direction: Vec2,
+}
+
+pub fn on_living_being_hit(
     mut commands: Commands,
-    mut enemy_query: Query<(Entity, &Transform, &Size), With<Enemy>>,
-    mut player_query: Query<(Entity, &Transform, &Size), With<Player>>,
-    mut blaster_query: Query<(Entity, &Transform, &Size, &Projectile)>,
-    mut state: ResMut<State<GameState>>,
+    mut living_being_hit_events: EventReader<LivingBeingHitEvent>,
+    mut send_living_being_death: EventWriter<LivingBeingDeathEvent>,
+    mut living_being: Query<(Entity, &mut Health), (With<LivingBeing>, Without<Dead>)>,
 ) {
-    // check collision with objects
-    for (projectile_entity, projectile_tf, projectile_size, projectile) in blaster_query.iter() {
-        if projectile.from_player {
-            check_collision_with_enemy(
-                &mut commands,
-                &enemy_query,
-                projectile_entity,
-                projectile_tf.translation,
-                projectile_size.0,
-            );
-        } else {
-            if (check_collision_with_player(
-                &mut commands,
-                &mut player_query,
-                projectile_entity,
-                projectile_tf.translation,
-                projectile_size.0,
-            )) {
-                state.push(GameState::GameOver).unwrap();
-            };
+    for event in living_being_hit_events.iter() {
+        for (being, mut health) in living_being.iter_mut() {
+            if (being == event.entity) {
+                health.health = health.health.saturating_sub(event.damage);
+            }
+
+            if health.health == 0 {
+                commands.entity(event.entity).insert(Dead {
+                    time_till_dispose: CooldownTimer::from_seconds(0.5),
+                    dying: false,
+                });
+            }
         }
     }
 }
 
-fn check_collision_with_enemy(
-    cmds: &mut Commands,
-    enemy_query: &Query<(Entity, &Transform, &Size), With<Enemy>>,
-    project_entity: bevy::prelude::Entity,
-    projectile_tf: Vec3,
-    projectile_size: Vec2,
+pub fn on_knock_back(
+    mut knockback_events: EventReader<KnockBackEvent>,
+    mut living_being: Query<(Entity, &mut ExternalImpulse), With<LivingBeing>>,
 ) {
-    for (enemy_entity, enemy_tf, enemy_size) in enemy_query.iter() {
-        let collision = collide(
-            enemy_tf.translation,
-            enemy_size.0,
-            projectile_tf,
-            projectile_size,
-        );
-        if collision.is_some() {
-            cmds.entity(enemy_entity).despawn_recursive();
-            cmds.entity(project_entity).despawn_recursive();
-            break;
+    for event in knockback_events.iter() {
+        for (being, mut ext_impulse) in living_being.iter_mut() {
+            if (being == event.entity) {
+                ext_impulse.impulse = event.direction.normalize() * KNOCKBACK_POWER;
+            }
         }
     }
 }
 
-fn check_collision_with_player(
-    cmds: &mut Commands,
-    player_query: &Query<(Entity, &Transform, &Size), With<Player>>,
-    project_entity: bevy::prelude::Entity,
-    projectile_tf: Vec3,
-    projectile_size: Vec2,
-) -> bool {
-    let (player_entity, player_tf, player_size) = player_query.get_single().unwrap();
-    let collision = collide(
-        player_tf.translation,
-        player_size.0,
-        projectile_tf,
-        projectile_size,
-    );
-    if collision.is_some() {
-        return true;
+fn despawn_dispose(mut commands: Commands, mut disposables: Query<Entity, With<Dispose>>) {
+    for entity in disposables.iter_mut() {
+        commands.entity(entity).despawn_recursive();
     }
-    return false;
 }
+
+// pub fn death_by_height(
+//     mut send_death_event: EventWriter<LivingBeingDeathEvent>,
+//     living_being: Query<(Entity, &RigidBodyPosition), With<LivingBeing>>,
+// ) {
+//     for (entity, position) in living_being.iter() {
+//         if position.position.translation.y < -1. {
+//             send_death_event.send(LivingBeingDeathEvent { entity })
+//         }
+//     }
+// }
