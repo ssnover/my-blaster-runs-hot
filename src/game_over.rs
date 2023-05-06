@@ -10,13 +10,13 @@ pub struct GameOverMenuPlugin;
 
 impl Plugin for GameOverMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(GameState::GameOver)
+        app.add_system_set(
+            SystemSet::on_enter(GameState::GameOver)
                 .with_system(setup_menu)
-                .with_system(despawn_all_non_ui))
-            .add_system_set(SystemSet::on_pause(GameState::GameOver).with_system(despawn_menu))
-            .add_system_set(
-                SystemSet::on_update(GameState::GameOver).with_system(handle_quit_button),
-            );
+                .with_system(despawn_all_non_ui),
+        )
+        .add_system_set(SystemSet::on_pause(GameState::GameOver).with_system(despawn_menu))
+        .add_system_set(SystemSet::on_update(GameState::GameOver).with_system(handle_quit_button));
     }
 }
 
@@ -71,30 +71,7 @@ fn setup_menu(
         button_pressed: assets.load("button_pressed.png"),
     };
 
-    let mut score_text = query.get_single_mut().unwrap();
-    score_text.sections[0].value = format!("Score: {}", score.0);
-
-    commands.spawn_bundle(UiCameraBundle::default());
-    commands.spawn_bundle(Text2dBundle {
-        text: Text::with_section(
-            format!("Score: {}", score.0),
-            TextStyle {
-                font: ui_assets.font.clone(),
-                font_size: 60.0,
-                color: Color::GREEN,
-            },
-            TextAlignment {
-                vertical: VerticalAlign::Center,
-                horizontal: HorizontalAlign::Center,
-            },
-        ),
-        transform: Transform{   
-            translation: Vec3::new(-100.0,-100.0,0.0),
-            ..Default::default()
-        },
-        ..Default::default()
-    });
-
+    commands.spawn_bundle(Camera2dBundle::default());
     commands
         .spawn_bundle(ButtonBundle {
             style: Style {
@@ -102,7 +79,12 @@ fn setup_menu(
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 size: Size::new(Val::Percent(20.0), Val::Percent(10.0)),
-                margin: Rect::all(Val::Auto),
+                position: UiRect::new(
+                    Val::Percent(40.0),
+                    Val::Percent(0.0),
+                    Val::Percent(0.0),
+                    Val::Percent(0.0),
+                ),
                 ..Default::default()
             },
             color: Color::NONE.into(),
@@ -124,14 +106,13 @@ fn setup_menu(
                 .insert(FocusPolicy::Pass)
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
-                        text: Text::with_section(
+                        text: Text::from_section(
                             "Quit Game",
                             TextStyle {
                                 font: ui_assets.font.clone(),
                                 font_size: 40.0,
                                 color: Color::rgb(0.9, 0.9, 0.9),
                             },
-                            Default::default(),
                         ),
                         focus_policy: FocusPolicy::Pass,
                         ..Default::default()
@@ -141,13 +122,13 @@ fn setup_menu(
     commands.insert_resource(ui_assets);
 }
 
-fn despawn_all_non_ui( mut commands: Commands, query: Query< Entity , Without<ScoreUi> >,){
+fn despawn_all_non_ui(mut commands: Commands, query: Query<Entity, Without<ScoreUi>>) {
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 }
 
-fn despawn_all( mut commands: Commands, query: Query< Entity>, ){
+fn despawn_all(mut commands: Commands, query: Query<Entity>) {
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }

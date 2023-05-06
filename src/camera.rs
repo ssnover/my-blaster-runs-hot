@@ -1,4 +1,4 @@
-use bevy::prelude::{Commands, UiCameraBundle};
+use bevy::prelude::{Camera2dBundle, Commands};
 
 /// Creates the default camera for the game.
 ///
@@ -6,5 +6,5 @@ use bevy::prelude::{Commands, UiCameraBundle};
 ///
 /// * `commands` - A list of commands used to modify a `World`.
 pub fn spawn_ui_camera_system(mut commands: Commands) {
-    commands.spawn_bundle(UiCameraBundle::default());
+    commands.spawn_bundle(Camera2dBundle::default());
 }

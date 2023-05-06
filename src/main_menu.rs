@@ -1,12 +1,13 @@
-// We need our game states so we can check what state we are in and states to 
+// We need our game states so we can check what state we are in and states to
 // transition to
-use crate::states::GameState; 
+use crate::states::GameState;
 
-// The Exit button is going to need to be able to close the game so we have to 
+// The Exit button is going to need to be able to close the game so we have to
 // use 'AppExit'
 use bevy::app::AppExit;
 
-use bevy::{prelude::*, ui::FocusPolicy};
+use bevy::sprite::Rect;
+use bevy::{prelude::*, ui::FocusPolicy, ui::UiRect};
 
 pub struct MainMenu;
 
@@ -29,19 +30,21 @@ impl Plugin for MainMenuPlugin {
     }
 }
 
-fn despawn_menu(mut commands: Commands, button_query: Query<Entity, With<Button> >) {
+fn despawn_menu(mut commands: Commands, button_query: Query<Entity, With<Button>>) {
     for entity in button_query.iter() {
         commands.entity(entity).despawn_recursive();
     }
 }
 
 fn handle_start_button(
-    mut commands: Commands, 
-    mut interaction_query: Query< (&Children, &mut ButtonActive, &Interaction), Changed<Interaction> >,
+    mut commands: Commands,
+    mut interaction_query: Query<
+        (&Children, &mut ButtonActive, &Interaction),
+        Changed<Interaction>,
+    >,
     mut image_query: Query<&mut UiImage>,
     mut state: ResMut<State<GameState>>,
     ui_assets: Res<UIAssets>,
-    
 ) {
     for (children, mut active, interaction) in interaction_query.iter_mut() {
         let child = children.iter().next().unwrap();
@@ -61,27 +64,32 @@ fn handle_start_button(
     }
 }
 
-fn setup_menu(mut commands: Commands, assets: Res<AssetServer>,) {
+fn setup_menu(mut commands: Commands, assets: Res<AssetServer>) {
     let ui_assets = UIAssets {
         font: assets.load("FiraSans-Bold.ttf"),
         button: assets.load("button.png"),
         button_pressed: assets.load("button_pressed.png"),
     };
 
-    commands.spawn_bundle(UiCameraBundle::default());
+    commands.spawn_bundle(Camera2dBundle::default());
     commands
         .spawn_bundle(ButtonBundle {
             style: Style {
                 align_self: AlignSelf::Center,
-                align_items: AlignItems::Center, 
+                align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 size: Size::new(Val::Percent(20.0), Val::Percent(10.0)),
-                margin: Rect::all(Val::Auto),
+                position: UiRect::new(
+                    Val::Percent(40.0),
+                    Val::Percent(0.0),
+                    Val::Percent(0.0),
+                    Val::Percent(0.0),
+                ),
                 ..Default::default()
             },
             color: Color::NONE.into(),
             ..Default::default()
-        }) 
+        })
         .insert(ButtonActive(true))
         .with_children(|parent| {
             parent
@@ -98,14 +106,13 @@ fn setup_menu(mut commands: Commands, assets: Res<AssetServer>,) {
                 .insert(FocusPolicy::Pass)
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
-                        text: Text::with_section(
+                        text: Text::from_section(
                             "Start Game",
                             TextStyle {
                                 font: ui_assets.font.clone(),
                                 font_size: 40.0,
                                 color: Color::rgb(0.9, 0.9, 0.9),
                             },
-                            Default::default(),
                         ),
                         focus_policy: FocusPolicy::Pass,
                         ..Default::default()
@@ -114,4 +121,3 @@ fn setup_menu(mut commands: Commands, assets: Res<AssetServer>,) {
         });
     commands.insert_resource(ui_assets);
 }
-

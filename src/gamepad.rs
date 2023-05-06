@@ -17,18 +17,22 @@ fn gamepad_connection_system(
     controller: Option<Res<Controller>>,
     mut gamepad_evr: EventReader<GamepadEvent>,
 ) {
-    for GamepadEvent(id, kind) in gamepad_evr.iter() {
-        match kind {
+    for GamepadEvent {
+        gamepad,
+        event_type,
+    } in gamepad_evr.iter()
+    {
+        match event_type {
             GamepadEventType::Connected => {
                 println!("Controller connected!");
                 if controller.is_none() {
-                    cmds.insert_resource(Controller(*id));
+                    cmds.insert_resource(Controller(*gamepad));
                 }
             }
             GamepadEventType::Disconnected => {
                 println!("Controller disconnected!");
                 if let Some(Controller(old_id)) = controller.as_deref() {
-                    if old_id == id {
+                    if old_id == gamepad {
                         cmds.remove_resource::<Controller>();
                     }
                 }
