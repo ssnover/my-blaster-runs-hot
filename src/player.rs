@@ -110,7 +110,7 @@ fn player_move_system(
 
     let mut player_vel = Vec2::new(0.0, 0.0);
 
-    if let Some(controller) = controller {
+    if let Some(controller) = Controller {
         let axis_lx = GamepadAxis::new(controller.0, GamepadAxisType::LeftStickX);
         let axis_ly = GamepadAxis::new(controller.0, GamepadAxisType::LeftStickY);
 
