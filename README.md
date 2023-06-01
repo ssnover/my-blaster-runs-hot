@@ -4,7 +4,7 @@
 ---
 </div>
 
-A twin stick shooter prototype inspired by the "My Blaster Runs Hot" mini-game from "Rachet and Clank A Crack in Time". The goal is recreate all the functionality from the mini-game. The current color code is blue = player, red = enemy and green = civillian.
+A twin stick shooter prototype inspired by the "My Blaster Runs Hot" mini-game from "Ratchet and Clank A Crack in Time". The goal is recreate all the functionality from the mini-game. The current color code is blue = player, red = enemy and green = civillian.
 
 ## Features 
 ---
