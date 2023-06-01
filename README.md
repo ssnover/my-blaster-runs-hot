@@ -15,7 +15,7 @@ Using these assets from <https://secrethideout.itch.io/team-wars-platformer-batt
 
 <div align="center">
 
-(https://github.com/ssnover/my-blaster-runs-hot/blob/main/assets/darians-assets/TeamGunner/CHARACTER_SPRITES/Blue/Blue_Soldier_50.png)
+![image](https://github.com/ssnover/my-blaster-runs-hot/blob/main/assets/darians-assets/TeamGunner/CHARACTER_SPRITES/Blue/Blue_Soldier_50.png)
 
 </div>
 
