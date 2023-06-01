@@ -4,7 +4,7 @@
 ---
 </div>
 
-A twin stick shooter prototype inspired by the My Blaster Runs Hot mini-game from Rachet and Clank A Crack in Time. The goal is recreate all the functionality from the mini-game, with. The current color code is blue = player, red = enemy and green = civillian.
+A twin stick shooter prototype inspired by the "My Blaster Runs Hot" mini-game from "Rachet and Clank A Crack in Time". The goal is recreate all the functionality from the mini-game, with. The current color code is blue = player, red = enemy and green = civillian.
 
 ## Features 
 ---
@@ -23,7 +23,7 @@ It does not have uniform dimensions for every animation array, I wrote my own tr
 
 ### Collisions 
 
-There is a nice physics engine that works well with Bevy, called Rapier that handles the definitions of the physics and has the ability to add custom groupings to determine what collisions the developer wants to track. You could see the player projectile go through the civillian as in the inspiration game (My Blaster Runs Hot) the player could not kill the civillians. Also the enemy collisions with the player cause the player damage compared to the civillian collisions which despawn the civillian and add to the score.
+There is a nice physics engine that works well with Bevy, called Rapier that handles the definitions of the physics and has the ability to add custom groupings to determine what collisions the developer wants to track. You could see the player projectile go through the civillian as in the inspiration game ("My Blaster Runs Hot") the player could not kill the civillians. Also the enemy collisions with the player cause the player damage compared to the civillian collisions which despawn the civillian and add to the score.
 
 ### UI
 
