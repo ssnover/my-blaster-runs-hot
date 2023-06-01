@@ -103,6 +103,10 @@ fn player_spawn_system(
 fn player_move_system(
     mut players: Query<(Entity, &mut Velocity, &Player, &mut PlayerAnimationInfo), Without<Dead>>,
 
+    controller: Option<Res<Controller>>,
+    axes: Res<Axis<GamepadAxis>>,
+    buttons: Res<Input<GamepadButton>>,
+
     keys: Res<Input<KeyCode>>,
 ) {
     let mut is_jump = false;
@@ -110,7 +114,7 @@ fn player_move_system(
 
     let mut player_vel = Vec2::new(0.0, 0.0);
 
-    if let Some(controller) = Controller {
+    if let Some(controller) = controller {
         let axis_lx = GamepadAxis::new(controller.0, GamepadAxisType::LeftStickX);
         let axis_ly = GamepadAxis::new(controller.0, GamepadAxisType::LeftStickY);
 
