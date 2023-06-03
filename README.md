@@ -34,5 +34,5 @@ There is start menu, main game loop and end game screen. The entity number and t
 
 Here are those features I just talked about in action
 
-![Demo](https://github.com/ssnover/my-blaster-runs-hot/blob/demo/my-blaster-runs-hot.gif)
+![Demo](https://github.com/ssnover/my-blaster-runs-hot/blob/main/demo/my-blaster-runs-hot.gif)
 
