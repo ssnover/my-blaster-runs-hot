@@ -103,6 +103,10 @@ fn player_spawn_system(
 fn player_move_system(
     mut players: Query<(Entity, &mut Velocity, &Player, &mut PlayerAnimationInfo), Without<Dead>>,
 
+    controller: Option<Res<Controller>>,
+    axes: Res<Axis<GamepadAxis>>,
+    buttons: Res<Input<GamepadButton>>,
+
     keys: Res<Input<KeyCode>>,
 ) {
     let mut is_jump = false;
