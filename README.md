@@ -11,7 +11,7 @@ A twin stick shooter prototype inspired by the "My Blaster Runs Hot" mini-game f
 
 ### Animations
 
-Using these assets from <https://secrethideout.itch.io/team-wars-platformer-battle> with slight modifications different animations will be run depening on the state of the entity. For example running, idle or death. Look at this animation sheet I use for the player. 
+Using these assets from <https://secrethideout.itch.io/team-wars-platformer-battle> with slight modifications different animations will be run depending on the state of the entity. For example running, idle or death. Look at this animation sheet I use for the player. 
 
 <div align="center">
 
@@ -23,11 +23,11 @@ It does not have uniform dimensions for every animation array, I wrote my own tr
 
 ### Collisions 
 
-There is a nice physics engine that works well with Bevy, called Rapier that handles the definitions of the physics and has the ability to add custom groupings to determine what collisions the developer wants to track. You could see the player projectile go through the civillian as in the inspiration game ("My Blaster Runs Hot") the player could not kill the civillians. Also the enemy collisions with the player cause the player damage compared to the civillian collisions which despawn the civillian and add to the score.
+There is a nice physics engine that works well with Bevy, called Rapier that handles the definitions of the physics and has the ability to add custom groupings to determine what collisions the developer wants to track. You could see the player projectile go through the civilian as in the inspiration game ("My Blaster Runs Hot") the player could not kill the civilians. Also the enemy collisions with the player cause the player damage compared to the civilian collisions which despawn the civilian and add to the score.
 
 ### UI
 
-There is start menu, main game loop and end game screen. The entity number and type is determined by a simple text file that defines the rounds, then those entities are spawned and the current Round is displayed. A round is over when all entities are despawned. Then the next round starts. Meanwhile the player lives are displayed, after the player takes enough damage a life is lost. After all rounds are done or the player loses all lives then end game screen is displayed showing the score.
+There is start menu, main game loop, and end game screen. The entity number and type is determined by a simple text file that defines the rounds, then those entities are spawned and the current Round is displayed. A round is over when all entities are despawned. Then the next round starts. Meanwhile the player lives are displayed, after the player takes enough damage a life is lost. After all rounds are done or the player loses all lives then end game screen is displayed showing the score.
 
 ## Demo
 ---
